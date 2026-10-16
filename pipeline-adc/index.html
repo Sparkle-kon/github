@@ -1,0 +1,1452 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>流水线 ADC 原理实验台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&display=swap">
+<style>
+/* Layout: a lesson column with a sticky chapter rail on wide screens; every chapter = prose, then an instrument "bench" you can operate.
+   Stage / sample hues borrow the oscilloscope channel colours (CH1 amber, CH2 cyan, CH3 magenta). */
+:root{
+  --bg:#ECEFEE; --panel:#FAFBFA; --panel2:#F0F3F2; --ink:#15212B; --muted:#55626D; --line:#C8D1D5; --grid:#E1E6E8;
+  --accent:#2A49C0; --accent-soft:rgba(42,73,192,.10); --on-accent:#FFFFFF;
+  --ch1:#A87800; --ch2:#05829A; --ch3:#AF2E74; --ok:#1A8555; --err:#C3352A;
+  --f-display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --f-body:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F151B; --panel:#151D25; --panel2:#1A242E; --ink:#E2E8ED; --muted:#93A2AE; --line:#2C3944; --grid:#1F2A34;
+    --accent:#88A3FF; --accent-soft:rgba(136,163,255,.14); --on-accent:#0D1420;
+    --ch1:#EDBE4A; --ch2:#4FC8DC; --ch3:#F07CB7; --ok:#4FC48D; --err:#FF7C6D; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F151B; --panel:#151D25; --panel2:#1A242E; --ink:#E2E8ED; --muted:#93A2AE; --line:#2C3944; --grid:#1F2A34;
+  --accent:#88A3FF; --accent-soft:rgba(136,163,255,.14); --on-accent:#0D1420;
+  --ch1:#EDBE4A; --ch2:#4FC8DC; --ch3:#F07CB7; --ok:#4FC48D; --err:#FF7C6D; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.8}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+sub,sup{font-size:.72em;line-height:0}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 96px}
+
+/* hero */
+.hero{display:grid;gap:18px;padding-block:20px 36px}
+.kicker{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hero h1{font-family:var(--f-display);font-weight:900;font-size:clamp(40px,7vw,72px);line-height:1.08;margin:0;letter-spacing:.01em;text-wrap:balance}
+.hero h1 small{display:block;font-family:var(--f-body);font-weight:500;font-size:clamp(16px,2.2vw,22px);letter-spacing:.06em;color:var(--muted);margin-top:12px}
+.lede{max-width:66ch;margin:0;color:var(--ink)}
+.chain{overflow-x:auto;margin:6px 0 0;padding:14px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.chain svg{display:block;width:100%;min-width:700px;height:auto}
+
+/* svg diagram vocabulary */
+.dg .blk{fill:var(--panel);stroke:var(--ink);stroke-width:1.5}
+.dg .blk.st{fill:var(--accent-soft)}
+.dg .blk.fl{fill:var(--panel2)}
+.dg .wire{stroke:var(--ink);stroke-width:1.5;fill:none}
+.dg .ahp{fill:var(--ink)}
+.dg .dot{fill:var(--ink)}
+.dg .t-b{font:600 14px var(--f-body);fill:var(--ink)}
+.dg .t-sm{font:13px var(--f-body);fill:var(--ink)}
+.dg .t-xs{font:11px var(--f-mono);fill:var(--muted)}
+.dg .mut{fill:var(--muted)}
+.dg .sub{font-size:10px}
+.dg a:hover .blk{stroke:var(--accent);stroke-width:2}
+
+/* layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+.toc ol{list-style:none;margin:0;padding:0 0 6px;display:flex;gap:6px;overflow-x:auto}
+.toc a{display:flex;gap:8px;white-space:nowrap;padding:5px 12px;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;background:var(--panel);font-size:14px}
+.toc a .n{font-family:var(--f-mono);color:var(--muted)}
+@media (min-width:1080px){
+  .layout{grid-template-columns:200px minmax(0,1fr);gap:48px}
+  .toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start}
+  .toc ol{flex-direction:column;gap:2px;overflow:visible}
+  .toc a{border:0;background:none;border-radius:6px;padding:6px 10px;white-space:normal;line-height:1.5}
+  .toc a:hover{background:var(--panel2)}
+  .toc a[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
+  .toc a[aria-current="true"] .n{color:var(--accent)}
+}
+
+/* chapters */
+.chap{padding-block:44px 52px;border-top:1px solid var(--line)}
+.chap:first-child{border-top:0;padding-top:4px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+.chap h2{font-family:var(--f-display);font-weight:700;font-size:clamp(25px,3.4vw,34px);line-height:1.3;margin:6px 0 18px;text-wrap:balance}
+.chap h3{font-size:19px;font-weight:700;margin:34px 0 10px;text-wrap:balance}
+.prose{max-width:70ch}
+.prose p{margin:0 0 14px}
+.prose ol,.prose ul{margin:0 0 14px;padding-left:1.4em;display:grid;gap:4px}
+.eq{font-family:var(--f-mono);font-size:15px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:12px 0 16px;overflow-x:auto;white-space:nowrap;line-height:1.9}
+.eq.sm{font-size:13px;padding:6px 10px;margin:8px 0}
+.m{font-family:var(--f-mono);font-size:.94em}
+.note{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:18px 0 0;max-width:70ch}
+.note .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:2px}
+details{margin:14px 0;max-width:70ch}
+details summary{cursor:pointer;color:var(--accent);font-weight:500}
+details .inner{padding:8px 0 0}
+
+/* bench */
+.bench{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bench-h{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--panel2);font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+.bench-b{padding:16px;display:grid;gap:16px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center}
+.ctl{display:flex;align-items:center;gap:10px;flex:1 1 280px;min-width:0}
+.ctl label,.lbl{font-size:14px;color:var(--muted);white-space:nowrap}
+.ctl input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.ctl output{font-family:var(--f-mono);font-size:14px;min-width:8.5ch;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel)}
+.seg button{font:inherit;font-size:13px;line-height:1.4;padding:6px 12px;background:transparent;color:var(--ink);border:0;border-right:1px solid var(--line);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--panel2)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.btn{font:inherit;font-size:13px;padding:6px 14px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+canvas.cv{display:block;width:100%;max-width:100%;touch-action:pan-y}
+.h240{height:240px}.h260{height:260px}.h280{height:280px}.h300{height:300px}.h340{height:340px}
+figure{margin:0;min-width:0}
+figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
+.split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:780px){.split{grid-template-columns:minmax(0,1fr)}}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:12px;letter-spacing:0;padding:3px 10px;border-radius:999px;border:1px solid currentColor;line-height:1.5}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{color:var(--ok)}.pill.bad{color:var(--err)}.pill.warn{color:var(--ch1)}
+.readout{display:flex;flex-wrap:wrap;gap:8px 26px;font-size:14px;align-items:baseline}
+.readout .k{color:var(--muted);margin-right:6px}
+.readout b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.sumline{font-family:var(--f-mono);font-size:13px;color:var(--muted);overflow-x:auto;white-space:nowrap;padding-bottom:2px}
+.scroll-x{overflow-x:auto}
+
+/* ch1 comparison */
+.cmp{display:grid;gap:12px}
+.cmp-row{display:grid;grid-template-columns:11em minmax(0,1fr) 10em 7.5em;gap:14px;align-items:center;font-size:14px}
+.cmp-row.hd{font-size:12px;color:var(--muted)}
+.cmp-k{font-weight:500}
+.cmp-bar{display:flex;align-items:center;gap:8px;height:22px;min-width:0}
+.cmp-bar span{height:100%;background:var(--accent);border-radius:3px;flex:none;transition:width .25s}
+.cmp-bar b{font-family:var(--f-mono);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.cmp-cy,.cmp-th{font-family:var(--f-mono);font-size:13px}
+@media (max-width:640px){
+  .cmp-row{grid-template-columns:1fr 1fr;grid-template-areas:"k k" "bar bar" "cy th";gap:4px 12px}
+  .cmp-row.hd{display:none}
+  .cmp-k{grid-area:k}.cmp-bar{grid-area:bar}.cmp-cy{grid-area:cy}.cmp-th{grid-area:th}
+}
+
+/* ch3 */
+.info{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:14px;margin:0}
+.info dt{color:var(--muted)}
+.info dd{margin:0;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.sch-wrap{overflow-x:auto}
+.sch{display:block;width:100%;min-width:560px;height:auto}
+.sch .w{stroke:var(--muted);stroke-width:1.6;fill:none;stroke-linecap:round;transition:stroke .2s}
+.sch[data-ph="1"] .w.p1{stroke:var(--ch2);stroke-width:2.8}
+.sch[data-ph="2"] .w.p2{stroke:var(--ch3);stroke-width:2.8}
+.sch .cap{stroke:var(--ink);stroke-width:3.2}
+.sch .amp{fill:var(--panel);stroke:var(--ink);stroke-width:1.6}
+.sch .gnd{stroke:var(--ink);stroke-width:1.5}
+.sch .term{fill:var(--panel);stroke:var(--ink);stroke-width:1.5}
+.sch .sw circle{fill:var(--panel);stroke:var(--ink);stroke-width:1.4}
+.sch .sw .lev{stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
+.sch[data-ph="1"] .sw[data-ph="1"] .lev{stroke:var(--ch2)}
+.sch[data-ph="2"] .sw[data-ph="2"] .lev{stroke:var(--ch3)}
+.sch .val{font:600 12px var(--f-mono);fill:var(--ink)}
+.sch .phl{font:600 11px var(--f-mono);fill:var(--muted)}
+.phase-cards{display:grid;gap:12px}
+.pc{border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px;opacity:.55;transition:opacity .2s,border-color .2s}
+.pc p{margin:4px 0}
+.pc.on{opacity:1}
+.pc[data-ph="1"].on{border-color:var(--ch2)}
+.pc[data-ph="2"].on{border-color:var(--ch3)}
+.pc-h{font-weight:700;display:flex;align-items:center;gap:8px}
+.pc-h i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* ch5 bit grids */
+.corr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:760px){.corr{grid-template-columns:minmax(0,1fr)}}
+.corr h4{margin:0 0 8px;font-size:14px;font-weight:700}
+.bits{display:grid;grid-template-columns:6.4em repeat(10,minmax(1.5em,1fr));gap:3px;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.bits > div{text-align:center;padding:2px 0;border-radius:3px}
+.bits .lab{text-align:left;color:var(--muted);font-size:12px;white-space:nowrap}
+.bits .lab em{font-style:normal;color:var(--ink)}
+.bits .hd{color:var(--muted);font-size:10px}
+.bits .b{background:var(--panel2)}
+.bits .b.one{color:var(--ink);font-weight:600}
+.bits .b.zero{color:var(--muted)}
+.bits .e{color:var(--line)}
+.bits .diff{background:var(--accent-soft);color:var(--accent)}
+.bits .rule{grid-column:1/-1;height:0;border-top:1.5px solid var(--ink);padding:0;margin:3px 0}
+.bits .sum{background:var(--ink);color:var(--panel);font-weight:600}
+.corr .dec{margin-top:8px;font-size:14px}
+.corr .dec b{font-family:var(--f-mono)}
+
+/* ch6 timing */
+.tt{border-collapse:separate;border-spacing:3px;font-size:12px;min-width:860px;width:100%}
+.tt th{font-weight:500;color:var(--muted);font-family:var(--f-mono);font-size:11px;padding:2px 4px}
+.tt th.rh{text-align:left;font-family:var(--f-body);font-size:13px;color:var(--ink);position:sticky;left:0;background:var(--panel);white-space:nowrap;padding-right:10px;z-index:1}
+.tt th.cyc{border-bottom:1px solid var(--line)}
+.tt th.ph.p1{box-shadow:inset 0 2px 0 var(--ink)}
+.tt th.ph.p2{box-shadow:inset 0 -2px 0 var(--ink)}
+.tt td{height:42px;text-align:center;border-radius:4px;padding:0 2px;line-height:1.25;cursor:pointer}
+.tt td.c{background:color-mix(in srgb,var(--sc) 15%,var(--panel));color:var(--ink)}
+.tt td.c span{display:block;font-size:11px;color:var(--muted)}
+.tt td.c b{font-family:var(--f-mono);font-weight:600;font-size:12px}
+.tt td.c.sel{background:color-mix(in srgb,var(--sc) 45%,var(--panel))}
+.tt td.c.sel span{color:var(--ink)}
+.tt td.e{background:transparent;cursor:default}
+.tt .now{outline:2px solid var(--ink);outline-offset:-1px}
+.narr{font-size:14px;min-height:3.6em}
+.narr .t{font-family:var(--f-mono);color:var(--accent);margin-right:8px}
+
+/* lab */
+.presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lab-ctl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px 28px}
+@media (max-width:820px){.lab-ctl{grid-template-columns:minmax(0,1fr)}}
+.col{display:grid;gap:12px;align-content:start}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+@media (max-width:820px){.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.met{background:var(--panel);padding:10px 12px;min-width:0}
+.met .k{font-size:12px;color:var(--muted);display:block}
+.met .v{font-family:var(--f-mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.met .v small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+.met .v.sm{font-size:15px;white-space:normal;line-height:1.5;display:block;padding-top:4px}
+.met .v.good{color:var(--ok)}.met .v.mid{color:var(--ch1)}.met .v.poor{color:var(--err)}
+.lab-plots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.lab-plots .wide{grid-column:1/-1}
+@media (max-width:780px){.lab-plots{grid-template-columns:minmax(0,1fr)}}
+.try{margin:0;padding-left:1.3em;display:grid;gap:6px;font-size:15px;max-width:76ch}
+
+/* tables */
+.tbl{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.tbl th{font-weight:600;background:var(--panel2);font-size:13px}
+.tbl td.y{color:var(--ok);font-weight:600}.tbl td.n{color:var(--err);font-weight:600}
+.tblwrap{overflow-x:auto;margin-top:16px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+
+/* ch8 */
+.kv{display:flex;flex-wrap:wrap;gap:8px 28px;font-size:14px}
+.kv b{font-family:var(--f-mono);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ch9 */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.card h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:500}
+.card .f{font-family:var(--f-mono);font-size:14px;line-height:1.7;overflow-x:auto}
+.quiz details{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;max-width:none}
+.quiz{display:grid;gap:10px;margin-top:8px}
+.quiz summary{color:var(--ink);font-weight:500}
+.quiz .inner{color:var(--ink)}
+.refs{font-size:14px;color:var(--muted);padding-left:1.3em;display:grid;gap:4px;max-width:80ch}
+.foot{margin-top:40px;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">交互式讲义 · 模数转换器 · Pipelined ADC</div>
+    <h1>流水线 ADC<small>逐级量化 · 残差放大 · 冗余与数字纠错</small></h1>
+    <p class="lede">这份讲义从“为什么要分级”讲起，依次经过 MDAC 电路、1.5 位冗余、错位相加、流水线时序，最后进入一个可以注入真实误差的 10 位 ADC 仿真器。每一章都配有可以拖动、切换、播放的实验台。全文约定 V<sub>ref</sub> = 1 V，差分输入满量程为 ±1 V；所有曲线都在浏览器中实时计算。</p>
+    <figure class="chain dg" aria-label="流水线 ADC 结构框图">
+      <svg viewBox="0 0 900 200" role="img">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahp" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <text class="t-sm" x="6" y="60">V<tspan dy="4" class="sub">in</tspan></text>
+        <path class="wire" d="M6 70 H60" marker-end="url(#ah)"/>
+        <a href="#timing"><rect class="blk" x="62" y="44" width="70" height="52" rx="4"/><text class="t-b" x="97" y="75" text-anchor="middle">S/H</text></a>
+        <path class="wire" d="M132 70 H168" marker-end="url(#ah)"/>
+        <a href="#mdac"><rect class="blk st" x="170" y="44" width="92" height="52" rx="4"/><text class="t-b" x="216" y="68" text-anchor="middle">第 1 级</text><text class="t-xs" x="216" y="86" text-anchor="middle">1.5 位</text></a>
+        <path class="wire" d="M262 70 H304" marker-end="url(#ah)"/>
+        <text class="t-xs" x="283" y="60" text-anchor="middle">×2 残差</text>
+        <a href="#mdac"><rect class="blk st" x="306" y="44" width="92" height="52" rx="4"/><text class="t-b" x="352" y="68" text-anchor="middle">第 2 级</text><text class="t-xs" x="352" y="86" text-anchor="middle">1.5 位</text></a>
+        <path class="wire" d="M398 70 H432" marker-end="url(#ah)"/>
+        <text class="t-b" x="452" y="75" text-anchor="middle">···</text>
+        <path class="wire" d="M470 70 H504" marker-end="url(#ah)"/>
+        <a href="#mdac"><rect class="blk st" x="506" y="44" width="92" height="52" rx="4"/><text class="t-b" x="552" y="68" text-anchor="middle">第 M 级</text><text class="t-xs" x="552" y="86" text-anchor="middle">1.5 位</text></a>
+        <path class="wire" d="M598 70 H640" marker-end="url(#ah)"/>
+        <a href="#idea"><rect class="blk fl" x="642" y="44" width="80" height="52" rx="4"/><text class="t-b" x="682" y="68" text-anchor="middle">Flash</text><text class="t-xs" x="682" y="86" text-anchor="middle">末级 2 位</text></a>
+        <path class="wire" d="M216 96 V136" marker-end="url(#ah)"/><text class="t-xs" x="222" y="122">d₁</text>
+        <path class="wire" d="M352 96 V136" marker-end="url(#ah)"/><text class="t-xs" x="358" y="122">d₂</text>
+        <path class="wire" d="M552 96 V136" marker-end="url(#ah)"/><text class="t-xs" x="558" y="122">d_M</text>
+        <path class="wire" d="M682 96 V136" marker-end="url(#ah)"/><text class="t-xs" x="688" y="122">f</text>
+        <a href="#correction"><rect class="blk" x="170" y="138" width="552" height="42" rx="4"/><text class="t-b" x="446" y="164" text-anchor="middle">延迟对齐 + 数字纠错（错位相加）</text></a>
+        <path class="wire" d="M722 159 H796" marker-end="url(#ah)"/>
+        <text class="t-sm" x="804" y="155">D<tspan dy="4" class="sub">out</tspan></text>
+        <text class="t-xs" x="804" y="174">N 位</text>
+      </svg>
+    </figure>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="章节">
+      <ol>
+        <li><a href="#why"><span class="n">1</span>为什么是流水线</a></li>
+        <li><a href="#idea"><span class="n">2</span>逐级细化</a></li>
+        <li><a href="#mdac"><span class="n">3</span>MDAC：每级的心脏</a></li>
+        <li><a href="#redundancy"><span class="n">4</span>冗余与 1.5 位级</a></li>
+        <li><a href="#correction"><span class="n">5</span>数字纠错</a></li>
+        <li><a href="#timing"><span class="n">6</span>时序、吞吐与延迟</a></li>
+        <li><a href="#lab"><span class="n">7</span>非理想因素实验台</a></li>
+        <li><a href="#budget"><span class="n">8</span>误差预算与电容缩放</a></li>
+        <li><a href="#cheat"><span class="n">9</span>速查与思考题</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <!-- 1 -->
+      <section class="chap" id="why">
+        <div class="eyebrow">第 1 章</div>
+        <h2>为什么需要流水线结构</h2>
+        <div class="prose">
+          <p>ADC 要做的事情很简单：把连续的电压 V<sub>in</sub> 变成 N 位数字码。难点在于<strong>速度、精度和功耗</strong>很难兼得。</p>
+          <p><strong>Flash ADC</strong> 用 2<sup>N</sup>−1 个比较器一次比完，速度最快，但比较器数量随位数指数增长，10 位就要 1023 个。<strong>SAR ADC</strong> 只用一个比较器，像天平称重一样逐位试探，每个样本需要约 N+1 个时钟周期。</p>
+          <p><strong>流水线 ADC</strong> 走中间路线：把 N 位拆给串联的若干“级”，每级只粗量化 1 到 4 位，再把本级没量化完的“余数”（<strong>残差</strong>）放大后交给下一级。各级像流水线上的工人一样<strong>同时处理不同的样本</strong>，所以每个时钟都能输出一个结果，代价是几个时钟周期的延迟。它的主战场是 10 到 16 位、几十 MS/s 到 GS/s 级别的应用：通信接收机、基站、视频、超声成像和软件无线电。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 1 · 三种架构的代价</span><span>流水线按 (N−2) 个 1.5 位级 + 2 位 Flash 计</span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="ctl"><label for="n-bits">分辨率 N</label><input type="range" id="n-bits" min="6" max="16" step="1" value="10"><output id="n-bits-o">10 位</output></div>
+            </div>
+            <div class="cmp" id="cmp-rows"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section class="chap" id="idea">
+        <div class="eyebrow">第 2 章</div>
+        <h2>核心思想：粗量化，减掉，放大，再量化</h2>
+        <div class="prose">
+          <p>想象一把只有几个刻度的尺子。先读出最接近的粗刻度，把“剩下的那一截”放大 2 倍，再用同一把尺子去量；如此重复。每重复一次，就多得到 1 位精度。流水线 ADC 的每一级就是“一把粗尺子 + 一个放大镜”。第 k 级依次做五件事：</p>
+          <ol>
+            <li><strong>采样保持</strong>：锁住本级输入 V<sub>k</sub>。</li>
+            <li><strong>粗量化</strong>：子 ADC（几个比较器）判断 V<sub>k</sub> 落在哪个区间，得到数字码 D<sub>k</sub>。</li>
+            <li><strong>数模转换</strong>：子 DAC 把 D<sub>k</sub> 变回模拟电压 D<sub>k</sub>·V<sub>ref</sub>/G。</li>
+            <li><strong>相减</strong>：V<sub>k</sub> − D<sub>k</sub>·V<sub>ref</sub>/G，就是本级的量化误差。</li>
+            <li><strong>放大</strong>：乘以级间增益 G（1.5 位级 G = 2），让残差重新铺满 ±V<sub>ref</sub>，交给下一级。</li>
+          </ol>
+          <div class="eq">V<sub>res,k</sub> = G · V<sub>k</sub> − D<sub>k</sub> · V<sub>ref</sub></div>
+          <p>把各级的式子首尾相接（以 G = 2 为例），输入电压就被写成一个加权和，最后一项由末级的小 Flash ADC 量化：</p>
+          <div class="eq">V<sub>in</sub> = D<sub>1</sub>·V<sub>ref</sub>/2 + D<sub>2</sub>·V<sub>ref</sub>/4 + … + D<sub>M</sub>·V<sub>ref</sub>/2<sup>M</sup> + V<sub>res,M</sub>/2<sup>M</sup></div>
+          <p>下面的“放大镜”图中，每一行是一级。彩色色块是子 ADC 的判决区间（青色 D&lt;0，灰色 D=0，品红 D&gt;0），黑点是该级的输入，半透明漏斗表示被选中的区间经过“减 D、乘 G”之后铺满下一行。拖动 V<sub>in</sub>（也可以直接在第一行上拖动）看各级如何接力。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 2 · 逐级放大镜（10 位）</span><span id="w2-cfg">8 级 × 1.5 位 + 2 位 Flash</span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="ctl"><label for="w2-vin">V<sub>in</sub></label><input type="range" id="w2-vin" min="-1" max="1" step="0.001" value="0.372"><output id="w2-vin-o">+0.372 V</output></div>
+              <div class="seg" id="w2-type" role="group" aria-label="每级结构"><button data-v="1" aria-pressed="false">1 位/级</button><button data-v="1.5" aria-pressed="true">1.5 位/级</button><button data-v="2.5" aria-pressed="false">2.5 位/级</button></div>
+              <button class="btn" id="w2-play" aria-pressed="false">自动扫描</button>
+            </div>
+            <canvas class="cv" id="ruler" aria-label="逐级量化放大镜图"></canvas>
+            <div class="readout" id="w2-out"></div>
+            <div class="sumline" id="w2-sum"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="chap" id="mdac">
+        <div class="eyebrow">第 3 章</div>
+        <h2>MDAC：每一级的心脏</h2>
+        <div class="prose">
+          <p>每一级的结构如下图：子 ADC 负责粗量化，其余的采样保持、DAC、相减和放大四件事，在实际电路里由<strong>同一个开关电容电路</strong>完成，称为<strong>乘法型 DAC（MDAC，Multiplying DAC）</strong>。</p>
+        </div>
+        <div class="chain dg" style="margin-top:6px">
+          <svg viewBox="0 0 680 206" role="img" aria-label="单级结构框图">
+            <text class="t-sm" x="4" y="54">V<tspan dy="4" class="sub">k</tspan></text>
+            <path class="wire" d="M4 62 H90" marker-end="url(#ah)"/>
+            <circle class="dot" cx="50" cy="62" r="3.5"/>
+            <rect class="blk" x="92" y="40" width="80" height="44" rx="4"/><text class="t-b" x="132" y="67" text-anchor="middle">S/H</text>
+            <path class="wire" d="M172 62 H380" marker-end="url(#ah)"/>
+            <circle class="blk" cx="400" cy="62" r="18"/><text class="t-b" x="400" y="67" text-anchor="middle">Σ</text>
+            <text class="t-b" x="368" y="52">+</text>
+            <path class="wire" d="M418 62 H452" marker-end="url(#ah)"/>
+            <rect class="blk st" x="454" y="40" width="70" height="44" rx="4"/><text class="t-b" x="489" y="67" text-anchor="middle">× G</text>
+            <path class="wire" d="M524 62 H600" marker-end="url(#ah)"/>
+            <text class="t-sm" x="606" y="58">V<tspan dy="4" class="sub">res,k</tspan></text>
+            <path class="wire" d="M50 62 V140 H90" marker-end="url(#ah)"/>
+            <rect class="blk" x="92" y="118" width="96" height="44" rx="4"/><text class="t-b" x="140" y="145" text-anchor="middle">子 ADC</text>
+            <path class="wire" d="M188 140 H258" marker-end="url(#ah)"/>
+            <text class="t-xs" x="200" y="132">D_k</text>
+            <circle class="dot" cx="230" cy="140" r="3.5"/>
+            <rect class="blk" x="260" y="118" width="80" height="44" rx="4"/><text class="t-b" x="300" y="145" text-anchor="middle">DAC</text>
+            <path class="wire" d="M340 140 H400 V82" marker-end="url(#ah)"/>
+            <text class="t-b" x="408" y="106">−</text>
+            <text class="t-xs" x="346" y="132">D·Vref/G</text>
+            <path class="wire" d="M230 140 V188" marker-end="url(#ah)"/>
+            <text class="t-sm" x="240" y="196">d<tspan dy="4" class="sub">k</tspan><tspan dy="-4"> → 延迟对齐与数字纠错</tspan></text>
+            <text class="t-xs" x="536" y="194" text-anchor="end">虚线框 = MDAC</text>
+            <rect x="80" y="30" width="458" height="144" rx="8" fill="none" stroke="var(--accent)" stroke-dasharray="5 4" stroke-width="1.2"/>
+          </svg>
+        </div>
+
+        <h3>残差传输曲线</h3>
+        <div class="prose">
+          <p>把 V<sub>res</sub> 对 V<sub>in</sub> 画出来，就得到每种级结构的“指纹”：一条锯齿线。斜率等于级间增益 G；每越过一个比较器阈值，D 加 1，曲线下跳 V<sub>ref</sub>。对比四种结构，注意两件事：<strong>有没有越出 ±V<sub>ref</sub>（红色区）</strong>，以及<strong>残差离边界还有多少余量</strong>。可以直接在图上拖动输入点。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 3 · 残差传输曲线</span><span id="w3-tag">1.5 位级</span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="seg" id="w3-type" role="group" aria-label="级结构"><button data-v="1" aria-pressed="false">1 位</button><button data-v="1.5" aria-pressed="true">1.5 位</button><button data-v="2" aria-pressed="false">2 位</button><button data-v="2.5" aria-pressed="false">2.5 位</button></div>
+              <div class="ctl"><label for="w3-vin">V<sub>in</sub></label><input type="range" id="w3-vin" min="-1" max="1" step="0.001" value="0.6"><output id="w3-vin-o">+0.600 V</output></div>
+            </div>
+            <div class="split">
+              <canvas class="cv h300" id="res3" aria-label="残差传输曲线"></canvas>
+              <div>
+                <dl class="info" id="w3-info"></dl>
+                <div class="eq sm" id="w3-eq"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>开关电容实现（以 1.5 位级为例）</h3>
+        <div class="prose">
+          <p>两相不交叠时钟 φ1、φ2 控制开关，电路在两相之间来回切换：</p>
+          <ul>
+            <li><strong>φ1 采样</strong>：C<sub>s</sub> 和 C<sub>f</sub> 的下极板都接 V<sub>in</sub>，上极板（节点 X）接地，存下电荷 (C<sub>s</sub>+C<sub>f</sub>)·V<sub>in</sub>。φ1 结束时子 ADC 的比较器锁存，得到 D。</li>
+            <li><strong>φ2 放大</strong>：C<sub>f</sub> 翻转接到运放输出（flip-around），C<sub>s</sub> 下极板接到 D·V<sub>ref</sub>。运放把 X 拉回虚地，电荷守恒给出：</li>
+          </ul>
+          <div class="eq">(C<sub>s</sub>+C<sub>f</sub>)·V<sub>in</sub> = C<sub>s</sub>·D·V<sub>ref</sub> + C<sub>f</sub>·V<sub>out</sub> &nbsp;⇒&nbsp; V<sub>out</sub> = (1 + C<sub>s</sub>/C<sub>f</sub>)·V<sub>in</sub> − (C<sub>s</sub>/C<sub>f</sub>)·D·V<sub>ref</sub></div>
+          <p>取 C<sub>s</sub> = C<sub>f</sub>，正好得到 V<sub>out</sub> = 2V<sub>in</sub> − D·V<sub>ref</sub>。一个运放、两个电容，同时完成了采样保持、DAC、减法和 ×2 放大。点击相位按钮看开关如何切换；数值跟随上面实验台的 V<sub>in</sub>。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 4 · flip-around MDAC（单端示意，实际芯片为全差分）</span>
+            <span class="seg" id="ph-seg" role="group" aria-label="时钟相位"><button data-v="1" aria-pressed="true">φ1 采样</button><button data-v="2" aria-pressed="false">φ2 放大</button></span></div>
+          <div class="bench-b">
+            <div class="split">
+              <div class="sch-wrap">
+                <svg class="sch dg" id="sch" data-ph="1" viewBox="0 0 680 320" role="img" aria-label="开关电容 MDAC 电路">
+                  <circle class="term" cx="26" cy="165" r="5"/>
+                  <text class="t-sm" x="8" y="150">V<tspan dy="4" class="sub">in</tspan></text>
+                  <text class="val" id="sv-vin" x="6" y="196">+0.600 V</text>
+                  <path class="w p1" d="M31 165 H110 M110 95 V235 M110 95 H128 M110 235 H128 M66 165 V60"/>
+                  <rect class="blk" x="16" y="20" width="100" height="40" rx="4"/>
+                  <text class="t-b" x="66" y="45" text-anchor="middle">子 ADC</text>
+                  <path class="w p2" d="M116 40 H166" marker-end="url(#ah)"/>
+                  <text class="val" id="sv-d" x="142" y="32" text-anchor="middle">D=+1</text>
+                  <rect class="blk" x="170" y="20" width="90" height="40" rx="4"/>
+                  <text class="t-b" x="215" y="45" text-anchor="middle">DAC</text>
+                  <text class="val" id="sv-dac" x="268" y="45">D·Vref = +1 V</text>
+                  <path class="w p2" d="M215 60 V64"/>
+                  <g class="sw" data-ph="2" data-a="215,64" data-b="215,95"><line class="lev"/><circle cx="215" cy="64" r="3"/></g>
+                  <text class="phl" x="238" y="74">S3 φ2</text>
+                  <g class="sw" data-ph="1" data-a="128,95" data-b="168,95"><line class="lev"/><circle cx="128" cy="95" r="3"/><circle cx="168" cy="95" r="3"/></g>
+                  <text class="phl" x="132" y="84">S1 φ1</text>
+                  <path class="w p1" d="M168 95 H215"/>
+                  <path class="w p1 p2" d="M215 95 H290"/>
+                  <circle class="dot" cx="215" cy="95" r="3"/>
+                  <path class="cap" d="M290 78 V112 M302 78 V112"/>
+                  <text class="t-sm" x="296" y="70" text-anchor="middle">C<tspan dy="4" class="sub">s</tspan></text>
+                  <g class="sw" data-ph="1" data-a="128,235" data-b="168,235"><line class="lev"/><circle cx="128" cy="235" r="3"/><circle cx="168" cy="235" r="3"/></g>
+                  <text class="phl" x="132" y="224">S2 φ1</text>
+                  <path class="w p1" d="M168 235 H215"/>
+                  <path class="w p1 p2" d="M215 235 H290"/>
+                  <circle class="dot" cx="215" cy="235" r="3"/>
+                  <path class="cap" d="M290 218 V252 M302 218 V252"/>
+                  <text class="t-sm" x="296" y="210" text-anchor="middle">C<tspan dy="4" class="sub">f</tspan></text>
+                  <path class="w p1 p2" d="M302 95 H380 M302 235 H380 M380 95 V235 M380 145 H440"/>
+                  <text class="t-b" x="386" y="132">X</text>
+                  <path class="w p1" d="M380 190 H366 M334 190 V204"/>
+                  <g class="sw" data-ph="1" data-a="366,190" data-b="334,190"><line class="lev"/><circle cx="366" cy="190" r="3"/><circle cx="334" cy="190" r="3"/></g>
+                  <text class="phl" x="330" y="178">S5 φ1</text>
+                  <path class="gnd" d="M324 204 H344 M328 209 H340 M332 214 H336"/>
+                  <path class="amp" d="M440 115 L440 215 L530 165 Z"/>
+                  <text class="t-b" x="448" y="150">−</text><text class="t-b" x="448" y="190">+</text>
+                  <path class="w" d="M440 185 H420 V204"/>
+                  <path class="gnd" d="M410 204 H430 M414 209 H426 M418 214 H422"/>
+                  <path class="w p2" d="M530 165 H640"/>
+                  <circle class="dot" cx="600" cy="165" r="3"/>
+                  <circle class="term" cx="645" cy="165" r="5"/>
+                  <text class="t-sm" x="612" y="150">V<tspan dy="4" class="sub">out</tspan></text>
+                  <text class="val" id="sv-out" x="608" y="194">—</text>
+                  <path class="w p2" d="M215 235 V245"/>
+                  <g class="sw" data-ph="2" data-a="215,245" data-b="215,280"><line class="lev"/><circle cx="215" cy="245" r="3"/><circle cx="215" cy="280" r="3"/></g>
+                  <text class="phl" x="238" y="262">S4 φ2</text>
+                  <path class="w p2" d="M215 280 V295 H600 V165"/>
+                </svg>
+              </div>
+              <div class="phase-cards">
+                <div class="pc on" data-ph="1">
+                  <div class="pc-h"><i style="background:var(--ch2)"></i>φ1 · 采样</div>
+                  <p>S1、S2、S5 闭合。两个电容并联接在 V<sub>in</sub> 和地之间。</p>
+                  <div class="eq sm" id="pc-q"></div>
+                  <p>φ1 末尾子 ADC 锁存：<b class="m" id="pc-d"></b></p>
+                </div>
+                <div class="pc" data-ph="2">
+                  <div class="pc-h"><i style="background:var(--ch3)"></i>φ2 · 放大</div>
+                  <p>S3、S4 闭合。C<sub>f</sub> 跨接在输出与 X 之间，C<sub>s</sub> 接 D·V<sub>ref</sub>。</p>
+                  <div class="eq sm" id="pc-out"></div>
+                  <p>这个电压在 φ2 期间被下一级采样。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>两个细节会在后面反复出现：一是<strong>增益精度由电容比 C<sub>s</sub>/C<sub>f</sub> 决定</strong>，电容失配直接变成级间增益误差和 DAC 误差；二是放大相的反馈系数 <span class="m">β = C<sub>f</sub>/(C<sub>s</sub>+C<sub>f</sub>+C<sub>p</sub>) ≈ 1/2</span>，它和运放的增益带宽积一起决定了半个时钟内能建立到多高精度。</p>
+        </div>
+      </section>
+
+      <!-- 4 -->
+      <section class="chap" id="redundancy">
+        <div class="eyebrow">第 4 章</div>
+        <h2>冗余：为什么是“1.5 位”</h2>
+        <div class="prose">
+          <p>比较器由晶体管构成，失配会带来几毫伏到几十毫伏的失调。看 1 位级：阈值本应在 0，若偏到 +40 mV，当 V<sub>in</sub> 落在 0 到 40 mV 之间时比较器会错判 D = −1，残差 2V<sub>in</sub> + V<sub>ref</sub> 超出 +V<sub>ref</sub>，下一级“装不下”，转换结果就错了。</p>
+          <p>1.5 位级用两个比较器（阈值 ±V<sub>ref</sub>/4）和三电平 DAC（D = −1, 0, +1）。理想情况下残差只占 ±V<sub>ref</sub>/2，两侧各留出 V<sub>ref</sub>/2 的余量。比较器即使偏移了 V<sub>ref</sub>/4 以内，残差仍在 ±V<sub>ref</sub> 之内，后级会把这次“判错”补回来，因为同一个 V<sub>in</sub> 可以有不止一种合法的码字组合。这就是<strong>冗余</strong>。</p>
+          <p>每级给出 3 种码（log<sub>2</sub>3 ≈ 1.58 位），但只贡献 1 位有效分辨率，多出来的部分就是冗余，“1.5 位”的叫法由此而来。代价只是多一个比较器，换来的是比较器可以做得极简单、极省电，通常一个动态锁存器就够了。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 5 · 第 1 级比较器失调（6 位 ADC，后级理想）</span><span class="pill ok" id="w4-pill">—</span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="seg" id="w4-type" role="group" aria-label="级结构"><button data-v="1" aria-pressed="true">1 位级</button><button data-v="1.5" aria-pressed="false">1.5 位级</button></div>
+              <div class="ctl"><label for="w4-off">比较器失调</label><input type="range" id="w4-off" min="-0.4" max="0.4" step="0.005" value="0.06"><output id="w4-off-o">+60 mV</output></div>
+            </div>
+            <div class="split">
+              <figure><figcaption>第 1 级残差（灰线为理想，红色为越界部分）</figcaption><canvas class="cv h300" id="res4"></canvas></figure>
+              <figure><figcaption>整机传输曲线与误差（单位 LSB）</figcaption><canvas class="cv h300" id="tf4"></canvas></figure>
+            </div>
+            <div class="readout" id="w4-hint"></div>
+          </div>
+        </div>
+        <div class="note"><span class="tag">注意</span>冗余只能纠正<strong>子 ADC 的判决误差</strong>。如果级间增益不是精确的 2，或者 DAC 电平不准，残差本身就是错的，冗余救不了。这要靠电容匹配、高增益运放或数字校准，见第 7 章。</div>
+      </section>
+
+      <!-- 5 -->
+      <section class="chap" id="correction">
+        <div class="eyebrow">第 5 章</div>
+        <h2>数字纠错：错位相加</h2>
+        <div class="prose">
+          <p>每个 1.5 位级输出 d<sub>k</sub> = D<sub>k</sub> + 1 ∈ {0, 1, 2}，用 2 位二进制表示（00、01、10）。最终输出码是把各级码字<strong>错开一位相加</strong>，末级 Flash 的 2 位码 f 放在最低位：</p>
+          <div class="eq">D<sub>out</sub> = d<sub>1</sub>·2<sup>N−2</sup> + d<sub>2</sub>·2<sup>N−3</sup> + … + d<sub>M</sub>·2<sup>1</sup> + f &nbsp;&nbsp;（N = M + 2）</div>
+          <p>相邻级的 2 位码重叠 1 位，所以需要的是一个加法器，而不是简单拼接。某一级因为比较器失调“多算了 1”，它的残差就会少一截，下一级的码字会相应变小，加起来正好抵消。下面两栏用同一个 V<sub>in</sub>：左边比较器理想，右边<strong>每一级</strong>的比较器都带同样的失调。中间的码字不同（高亮行），和却完全相同。把失调推过 ±250 mV 再看。</p>
+        </div>
+        <details>
+          <summary>推导：为什么错位相加就是正确答案</summary>
+          <div class="inner prose">
+            <p>令 V<sub>ref</sub> = 1。由 V<sub>res,k</sub> = 2V<sub>res,k−1</sub> − D<sub>k</sub> 逐级代回，得 V<sub>in</sub> = Σ D<sub>k</sub>/2<sup>k</sup> + V<sub>res,M</sub>/2<sup>M</sup>。代入 D<sub>k</sub> = d<sub>k</sub> − 1 和 N = M + 2：</p>
+            <div class="eq">(V<sub>in</sub> + 1)·2<sup>N−1</sup> = Σ d<sub>k</sub>·2<sup>N−1−k</sup> + (2 + 2V<sub>res,M</sub>)</div>
+            <p>末级 2 位 Flash 的输出恰好是 f = ⌊2 + 2V<sub>res,M</sub>⌋ ∈ {0,1,2,3}，所以 D<sub>out</sub> = ⌊(V<sub>in</sub>+1)·2<sup>N−1</sup>⌋ = Σ d<sub>k</sub>·2<sup>N−1−k</sup> + f。推导中<strong>没有用到 D<sub>k</sub> 是怎么判出来的</strong>，只要求每一级残差都留在 ±V<sub>ref</sub> 之内。这就是冗余能容忍判决误差的数学原因。</p>
+          </div>
+        </details>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 6 · 错位相加（10 位：8 × 1.5 位 + 2 位 Flash）</span><span class="pill ok" id="w5-pill">—</span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="ctl"><label for="w5-vin">V<sub>in</sub></label><input type="range" id="w5-vin" min="-1" max="1" step="0.001" value="0.32"><output id="w5-vin-o">+0.320 V</output></div>
+              <div class="ctl"><label for="w5-off">各级比较器失调</label><input type="range" id="w5-off" min="-0.35" max="0.35" step="0.005" value="0.12"><output id="w5-off-o">+120 mV</output></div>
+            </div>
+            <div class="corr">
+              <div><h4>理想比较器</h4><div class="bits" id="w5-a"></div><div class="dec" id="w5-a-d"></div></div>
+              <div><h4 id="w5-b-h">比较器失调 +120 mV</h4><div class="bits" id="w5-b"></div><div class="dec" id="w5-b-d"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 -->
+      <section class="chap" id="timing">
+        <div class="eyebrow">第 6 章</div>
+        <h2>时序：吞吐率与延迟</h2>
+        <div class="prose">
+          <p>每一级的工作分两个半周期：一相采样，一相放大。<strong>相邻两级使用相反的相位</strong>：第 k 级放大时，第 k+1 级正好在采样它的输出。于是在任意时刻，每一级都在处理<strong>不同的样本</strong>。</p>
+          <p>结果是吞吐率等于时钟频率，每个周期出一个码；但单个样本要走完所有级，延迟约 (M+2)/2 个周期。各级码字的产生时刻不同，需要用移位寄存器把它们延迟对齐后再错位相加。下表以 4 级 + Flash 为例。点击任意格子可以高亮该样本走过的“对角线”。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 7 · 流水线时序图（4 级 + 2 位 Flash）</span>
+            <span class="row"><button class="btn" id="t6-play" aria-pressed="false">播放</button><button class="btn" id="t6-step">单步</button></span></div>
+          <div class="bench-b">
+            <div class="scroll-x"><table class="tt" id="tt"></table></div>
+            <div class="narr" id="t6-narr"></div>
+            <div class="sumline" id="t6-align"></div>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>许多现代设计去掉了前端专用的 S/H（称为 SHA-less），由第一级 MDAC 直接采样输入，省下一个运放的功耗和噪声。代价是第一级的子 ADC 和 MDAC 两条采样路径必须时间匹配，否则高频输入时两者“看到”的电压不同。好在这种差异表现为判决误差，只要在冗余范围内就会被纠正。</p>
+        </div>
+      </section>
+
+      <!-- 7 -->
+      <section class="chap" id="lab">
+        <div class="eyebrow">第 7 章</div>
+        <h2>非理想因素实验台</h2>
+        <div class="prose">
+          <p>真实芯片里，每一级都会偏离理想的 V<sub>res</sub> = 2V<sub>in</sub> − D·V<sub>ref</sub>。下表总结了主要误差来源；随后的仿真器把其中几项做成旋钮，并给出三种标准测试的结果：残差曲线、静态线性度（DNL/INL）和动态性能（FFT 频谱，SNDR/ENOB）。</p>
+        </div>
+        <div class="tblwrap">
+          <table class="tbl">
+            <thead><tr><th>非理想因素</th><th>来源</th><th>对残差曲线的影响</th><th>冗余能否纠正</th><th>常见对策</th></tr></thead>
+            <tbody>
+              <tr><td>比较器失调</td><td>器件失配</td><td>阈值左右平移</td><td class="y">能（&lt; V<sub>ref</sub>/4）</td><td>冗余，动态比较器即可</td></tr>
+              <tr><td>电容失配</td><td>工艺、版图</td><td>斜率 ≠ 2，跳变高度 ≠ V<sub>ref</sub></td><td class="n">不能</td><td>加大电容、共质心版图、数字校准</td></tr>
+              <tr><td>运放有限增益 A</td><td>运放</td><td>整条曲线 × 1/(1+G/A)</td><td class="n">不能</td><td>增益自举、多级运放、数字校准</td></tr>
+              <tr><td>建立不完全</td><td>GBW 不足、时钟太快</td><td>类似增益误差，且可能非线性</td><td class="n">不能</td><td>提高 GBW 或 β，校准</td></tr>
+              <tr><td>kT/C 热噪声</td><td>采样电容</td><td>随机抖动</td><td class="n">不能</td><td>第一级用大电容</td></tr>
+              <tr><td>时钟抖动</td><td>时钟源</td><td>高频输入下 SNR 下降</td><td class="n">不能</td><td>低抖动时钟，SNR = −20·log(2π·f<sub>in</sub>·σ<sub>t</sub>)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 8 · 10 位流水线 ADC 行为级仿真</span><span class="pill ok" id="lab-pill">—</span></div>
+          <div class="bench-b">
+            <div class="presets" id="lab-presets"><span class="lbl">预设：</span>
+              <button class="btn" data-p="ideal">理想</button>
+              <button class="btn" data-p="offset">失调 60 mV · 1.5 位</button>
+              <button class="btn" data-p="offset1b">失调 60 mV · 1 位</button>
+              <button class="btn" data-p="cap">第 1 级电容失配 −1%</button>
+              <button class="btn" data-p="capcal">失配 + 数字校准</button>
+              <button class="btn" data-p="opamp">运放增益 50 dB</button>
+              <button class="btn" data-p="noise">噪声 1 mV</button>
+            </div>
+            <div class="lab-ctl">
+              <div class="col">
+                <div class="row"><span class="lbl">每级结构</span><div class="seg" id="lab-type" role="group" aria-label="每级结构"><button data-v="1">1 位</button><button data-v="1.5">1.5 位</button><button data-v="2.5">2.5 位</button></div></div>
+                <div class="row"><span class="lbl">误差作用于</span><div class="seg" id="lab-scope" role="group" aria-label="误差作用范围"><button data-v="first">仅第 1 级</button><button data-v="all">全部级</button></div></div>
+                <label class="chk" for="lab-cal"><input type="checkbox" id="lab-cal">数字校准（用实际级间增益重建输出）</label>
+                <div class="row"><button class="btn" id="lab-reseed">重新抽取随机失调</button></div>
+              </div>
+              <div class="col">
+                <div class="ctl"><label for="lab-sig">比较器失调 σ</label><input type="range" id="lab-sig" min="0" max="120" step="1" value="20"><output id="lab-sig-o"></output></div>
+                <div class="ctl"><label for="lab-dl">电容失配 δ</label><input type="range" id="lab-dl" min="-2" max="2" step="0.05" value="-1"><output id="lab-dl-o"></output></div>
+                <div class="ctl"><label for="lab-a">运放直流增益</label><input type="range" id="lab-a" min="30" max="100" step="1" value="100"><output id="lab-a-o"></output></div>
+                <div class="ctl"><label for="lab-nz">采样噪声 σ</label><input type="range" id="lab-nz" min="0" max="3" step="0.05" value="0"><output id="lab-nz-o"></output></div>
+              </div>
+            </div>
+            <div class="metrics" id="lab-metrics"></div>
+            <div class="lab-plots">
+              <figure><figcaption>第 1 级残差曲线（灰线为理想）</figcaption><canvas class="cv h280" id="lab-res"></canvas></figure>
+              <figure><figcaption>DNL / INL（斜坡直方图法，每码 16 个样本）</figcaption><canvas class="cv h280" id="lab-dnl"></canvas></figure>
+              <figure class="wide"><figcaption>输出频谱（4096 点相干采样 FFT，输入 −0.5 dBFS 正弦）</figcaption><canvas class="cv h260" id="lab-fft"></canvas></figure>
+            </div>
+          </div>
+        </div>
+        <h3>试试看</h3>
+        <ol class="try">
+          <li>选“失调 60 mV · 1.5 位”：比较器失调很大，但 ENOB 仍约 10 位，DNL 平坦。再切到“1 位”，同样的失调让性能崩溃。</li>
+          <li>选“第 1 级电容失配 −1%”：残差跳变处出现缺口，DNL 在 V<sub>in</sub> = ±V<sub>ref</sub>/4 对应的码字处出现 −1（失码，红点），INL 呈台阶状，频谱出现谐波。把 δ 改成正值，失码变成“宽码”甚至非单调。</li>
+          <li>打开“数字校准”：输出几乎恢复理想。校准之所以可行，是因为冗余保证了残差没有越界，信息没有丢失。在 1 位级上加正向失配再校准，就救不回来了。</li>
+          <li>“运放增益 50 dB”：每级增益都偏小约 0.6%，误差在全部级累积。把增益拉到 70 dB 以上看看需要多少才够。</li>
+          <li>“噪声 1 mV”：DNL 变得毛糙，频谱底噪抬高，但没有谐波。噪声是随机的，校准对它无效。</li>
+        </ol>
+        <div class="note"><span class="tag">关于数字校准</span>真实芯片会先测出每级的实际增益（前台校准用已知输入，后台校准在正常工作时用统计方法估计），再用测得的值代替理想的 2<sup>−k</sup> 权重做重建。这里直接使用仿真器里的真实参数，相当于一次完美校准。</div>
+      </section>
+
+      <!-- 8 -->
+      <section class="chap" id="budget">
+        <div class="eyebrow">第 8 章</div>
+        <h2>误差预算与电容缩放</h2>
+        <div class="prose">
+          <p>第 k 级的任何误差（噪声、增益误差）折算到输入时，都要除以它前面所有级增益的乘积：</p>
+          <div class="eq">V<sub>err,输入</sub> = V<sub>err,k</sub> / (G<sub>1</sub>·G<sub>2</sub>·…·G<sub>k−1</sub>)</div>
+          <p>对 1.5 位级，第 2 级的误差折半，第 3 级只剩 1/4。所以<strong>第一级最关键</strong>，它必须达到整个 ADC 的精度。几条常用的估算：</p>
+          <ul>
+            <li><strong>运放增益</strong>：有限增益使残差相对误差约为 G/A，折算到输入约为 V<sub>res</sub>/A。要让它小于 ½ LSB（残差可达 ±V<sub>ref</sub> 时），需要 A ≳ 2<sup>N</sup>。10 位约 60 dB，实际设计再留余量。</li>
+            <li><strong>建立时间</strong>：半个时钟内误差要衰减到 2<sup>−(N+1)</sup> 以下，需要约 (N+1)·ln2 个时间常数，10 位约 7.6τ，其中 τ = 1/(2π·β·GBW)。例如 100 MS/s、β = 1/2 时，GBW 约需 0.5 GHz。</li>
+            <li><strong>热噪声</strong>：采样电容带来 kT/C 的噪声功率。第一级电容通常按整机 SNR 目标确定，从几百 fF 到几 pF 不等。</li>
+          </ul>
+        </div>
+        <h3>电容缩放</h3>
+        <div class="prose">
+          <p>既然后级的噪声会被前级增益压低，后级就不需要那么大的电容。每级电容按比例 s 缩小，运放负载和功耗随之下降。拖动 s，观察总电容（近似代表功耗）与总输入等效噪声的取舍：</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 9 · 电容缩放（8 个 1.5 位级，G = 2，C₁ 固定）</span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="ctl"><label for="s8">每级缩放比 s</label><input type="range" id="s8" min="0.25" max="1" step="0.05" value="0.5"><output id="s8-o">0.50</output></div>
+            </div>
+            <div class="kv" id="s8-kv"></div>
+            <canvas class="cv h240" id="scale"></canvas>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>s = 1/2 时总电容约为不缩放时的 1/4，噪声功率只增加约 50%（1.7 dB）。再往下缩，后级噪声开始和第一级相当，得不偿失。实际中缩放到某一级后会受匹配和寄生电容限制，后面几级保持同样大小。</p>
+        </div>
+        <h3>每级放几位？</h3>
+        <div class="tblwrap">
+          <table class="tbl">
+            <thead><tr><th>方案</th><th>好处</th><th>代价</th></tr></thead>
+            <tbody>
+              <tr><td>1.5 位/级</td><td>反馈系数大（β ≈ 1/2），运放快、易建立；每级只有 2 个比较器</td><td>级数多；第一级要独自承担几乎全部精度</td></tr>
+              <tr><td>多位首级（2.5 至 4.5 位）</td><td>后级误差被更大的增益（4 至 16 倍）压低；级数少；后级电容可以更小</td><td>β 更小，运放更难做快；比较器数量翻倍增长；首级电容匹配要求更高</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 9 -->
+      <section class="chap" id="cheat">
+        <div class="eyebrow">第 9 章</div>
+        <h2>公式速查与思考题</h2>
+        <div class="cards">
+          <div class="card"><h4>单级传输</h4><div class="f">V<sub>res</sub> = G·V<sub>in</sub> − D·V<sub>ref</sub></div></div>
+          <div class="card"><h4>1.5 位级</h4><div class="f">阈值 ±V<sub>ref</sub>/4<br>D ∈ {−1, 0, +1}，G = 2</div></div>
+          <div class="card"><h4>n.5 位级</h4><div class="f">G = 2<sup>n</sup>，比较器 2<sup>n+1</sup>−2 个<br>容许失调 ±V<sub>ref</sub>/2<sup>n+1</sup></div></div>
+          <div class="card"><h4>MDAC（flip-around）</h4><div class="f">V<sub>out</sub> = (1+C<sub>s</sub>/C<sub>f</sub>)V<sub>in</sub> − (C<sub>s</sub>/C<sub>f</sub>)·D·V<sub>ref</sub></div></div>
+          <div class="card"><h4>数字输出</h4><div class="f">D<sub>out</sub> = Σ d<sub>k</sub>·2<sup>N−1−k</sup> + f</div></div>
+          <div class="card"><h4>误差折算到输入</h4><div class="f">ε<sub>k</sub> / (G<sub>1</sub>·…·G<sub>k−1</sub>)</div></div>
+          <div class="card"><h4>理想量化 SNR</h4><div class="f">6.02·N + 1.76 dB</div></div>
+          <div class="card"><h4>有效位数</h4><div class="f">ENOB = (SNDR − 1.76) / 6.02</div></div>
+          <div class="card"><h4>运放增益（第一级）</h4><div class="f">A ≳ 2<sup>N</sup></div></div>
+          <div class="card"><h4>建立时间</h4><div class="f">T/2 ≥ (N+1)·ln2·τ<br>τ = 1/(2π·β·GBW)</div></div>
+          <div class="card"><h4>热噪声</h4><div class="f">v<sub>n</sub><sup>2</sup> = kT/C</div></div>
+          <div class="card"><h4>延迟</h4><div class="f">约 (M+2)/2 个时钟周期</div></div>
+        </div>
+        <h3>思考题</h3>
+        <div class="quiz">
+          <details><summary>1. 12 位流水线 ADC 采用 10 个 1.5 位级 + 2 位 Flash，一共需要多少个比较器？换成 Flash ADC 呢？</summary><div class="inner">10 × 2 + 3 = 23 个。12 位 Flash 需要 2<sup>12</sup> − 1 = 4095 个。</div></details>
+          <details><summary>2. 1.5 位级能容忍多大的比较器失调？超过之后具体发生什么？</summary><div class="inner">±V<sub>ref</sub>/4。超过后残差越出 ±V<sub>ref</sub>，后级子 ADC 已经取到最大码也无法把它拉回来，残差逐级放大直到末级 Flash 饱和，输出出现大的错码。可以在实验台 5 把 1.5 位级的失调推过 ±250 mV 验证。</div></details>
+          <details><summary>3. 为什么数字纠错修不了电容失配，而数字校准可以？</summary><div class="inner">数字纠错按理想权重（2<sup>−k</sup>）组合各级码字，它只保证“判决错误”能被后级补回。电容失配改变了模拟残差本身的增益和跳变高度，按理想权重重建必然出错。数字校准则先测出实际增益，用实际权重重建；只要残差没有越界（冗余保证了这一点），信息就没有丢失，误差就能被消掉。</div></details>
+          <details><summary>4. 10 位 ADC，1.5 位级。第 3 级运放输出有 1 mV 的误差，折算到输入是多少？约等于几个 LSB？</summary><div class="inner">前面两级增益之积为 4，所以折算到输入为 0.25 mV。LSB = 2 V / 1024 ≈ 1.95 mV，约 0.13 LSB。</div></details>
+          <details><summary>5. 为什么相邻两级要用相反的时钟相位？</summary><div class="inner">第 k 级在放大相输出残差，第 k+1 级必须恰好在这一相采样它。若两级同相，下一级要多等半个周期，各级无法同时工作，吞吐率减半。</div></details>
+        </div>
+        <h3>延伸阅读</h3>
+        <ul class="refs">
+          <li>S. H. Lewis, P. R. Gray, “A pipelined 5-Msample/s 9-bit analog-to-digital converter,” IEEE JSSC, 1987.</li>
+          <li>S. H. Lewis et al., “A 10-b 20-Msample/s analog-to-digital converter,” IEEE JSSC, 1992（1.5 位/级与数字纠错）。</li>
+          <li>D. W. Cline, P. R. Gray, “A power optimized 13-b 5 Msamples/s pipelined ADC in 1.2 µm CMOS,” IEEE JSSC, 1996（电容缩放）。</li>
+          <li>B. Murmann, B. E. Boser, “A 12-bit 75-MS/s pipelined ADC using open-loop residue amplification,” IEEE JSSC, 2003（数字校准）。</li>
+          <li>B. Razavi, <em>Principles of Data Conversion System Design</em>, IEEE Press, 1995。</li>
+        </ul>
+        <p class="foot">模型说明：所有级采用 flip-around MDAC 行为模型 V<sub>res</sub> = [(1+(G−1)(1+δ))·V<sub>in</sub> − (1+δ)·D·V<sub>ref</sub>] / (1 + G/A) + 噪声，运放输出摆幅限制在 ±1.5 V；末级为理想 2 位 Flash；未建模建立误差、时钟抖动与基准源噪声。</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+const MINUS = '−';
+const MONO = '"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace';
+const SANS = '"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif';
+const sgn = n => n > 0 ? '+' + n : n < 0 ? MINUS + (-n) : '0';
+const fv = (v, d = 3) => { const s = Math.abs(v).toFixed(d); return (v < 0 && parseFloat(s) !== 0 ? MINUS : '+') + s; };
+const bin = (n, w) => n.toString(2).padStart(w, '0');
+const tk = t => t === 0 ? '0' : (t < 0 ? MINUS : '') + Math.abs(t);
+const mV = v => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.round(Math.abs(v) * 1000) + ' mV';
+function frac(x) {
+  if (x === 0) return '0';
+  const s = x < 0 ? MINUS : '+', a = Math.abs(x);
+  for (const d of [1, 2, 4, 8, 16]) { const n = a * d; if (Math.abs(n - Math.round(n)) < 1e-9) return s + (d === 1 ? Math.round(n) : Math.round(n) + '/' + d); }
+  return s + a.toFixed(3);
+}
+
+/* ---------- theme colours ---------- */
+let C = {};
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['bg', 'panel', 'panel2', 'ink', 'muted', 'line', 'grid', 'accent', 'ch1', 'ch2', 'ch3', 'ok', 'err']) C[k] = cs.getPropertyValue('--' + k).trim();
+}
+function A(hex, a) {
+  let h = (hex || '#888888').replace('#', '');
+  if (h.length === 3) h = [...h].map(c => c + c).join('');
+  const n = parseInt(h, 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
+}
+
+/* ---------- canvas helpers ---------- */
+function prep(cv, hCss) {
+  if (hCss != null) cv.style.height = hCss + 'px';
+  const w = cv.clientWidth, h = cv.clientHeight;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = Math.max(1, Math.round(w * dpr)), H = Math.max(1, Math.round(h * dpr));
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+function axes(ctx, o) {
+  const X = v => o.x + (v - o.xmin) / (o.xmax - o.xmin) * o.w;
+  const Y = v => o.y + o.h - (v - o.ymin) / (o.ymax - o.ymin) * o.h;
+  ctx.save();
+  ctx.lineWidth = 1; ctx.strokeStyle = C.grid; ctx.font = '11px ' + MONO; ctx.fillStyle = C.muted;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const t of o.xt || []) {
+    const px = Math.round(X(t)) + .5;
+    ctx.beginPath(); ctx.moveTo(px, o.y); ctx.lineTo(px, o.y + o.h); ctx.stroke();
+    if (!o.noXLab) ctx.fillText((o.xf || tk)(t), px, o.y + o.h + 5);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const t of o.yt || []) {
+    const py = Math.round(Y(t)) + .5;
+    ctx.beginPath(); ctx.moveTo(o.x, py); ctx.lineTo(o.x + o.w, py); ctx.stroke();
+    ctx.fillText((o.yf || tk)(t), o.x - 6, py);
+  }
+  ctx.strokeStyle = C.line; ctx.strokeRect(o.x + .5, o.y + .5, o.w - 1, o.h - 1);
+  ctx.font = '11px ' + SANS; ctx.fillStyle = C.muted;
+  if (o.yl) { ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(o.yl, o.x, o.y - 4); }
+  if (o.xl) { ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText(o.xl, o.x + o.w, o.y + o.h + 19); }
+  ctx.restore();
+  return { X, Y };
+}
+function dragOn(cv, set) {
+  let down = false;
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.addEventListener('pointerdown', e => {
+    const [x, y] = pos(e);
+    if (!cv._inv || (cv._hit && !cv._hit(x, y))) return;
+    down = true; try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    set(cv._inv(x));
+  });
+  cv.addEventListener('pointermove', e => { if (down) set(cv._inv(pos(e)[0])); });
+  const up = () => { down = false; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+}
+function seg(el, cb) {
+  el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !el.contains(b)) return;
+    segSet(el, b.dataset.v); cb(b.dataset.v);
+  });
+}
+function segSet(el, v) { $$('button', el).forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v ? 'true' : 'false')); }
+
+/* ---------- RNG ---------- */
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gaussFn(rng) {
+  let spare = null;
+  return () => {
+    if (spare !== null) { const s = spare; spare = null; return s; }
+    let u, v, s;
+    do { u = rng() * 2 - 1; v = rng() * 2 - 1; s = u * u + v * v; } while (s >= 1 || s === 0);
+    const m = Math.sqrt(-2 * Math.log(s) / s); spare = v * m; return u * m;
+  };
+}
+
+/* ---------- pipeline model ---------- */
+const ST = {
+  '1':   { G: 2, th: [0], Dv: [-1, 1], bits: 1 },
+  '1.5': { G: 2, th: [-.25, .25], Dv: [-1, 0, 1], bits: 2 },
+  '2':   { G: 4, th: [-.5, 0, .5], Dv: [-3, -1, 1, 3], bits: 2 },
+  '2.5': { G: 4, th: [-.625, -.375, -.125, .125, .375, .625], Dv: [-3, -2, -1, 0, 1, 2, 3], bits: 3 }
+};
+const isRedundant = t => ST[t].Dv.length > ST[t].G;
+function cfgFor(type, N = 10) { const s = ST[type], per = Math.log2(s.G), b = 2; return { type, N, b, G: s.G, M: (N - b) / per }; }
+function evalStage(type, v, off, dl, Ag) {
+  const s = ST[type], G = s.G;
+  let i = 0;
+  for (let j = 0; j < s.th.length; j++) if (v >= s.th[j] + (off ? off[j] : 0)) i++;
+  const D = s.Dv[i];
+  const cin = 1 + (G - 1) * (1 + dl), cd = 1 + dl;
+  return { i, D, r: clamp((cin * v - cd * D) / (1 + G / Ag), -1.5, 1.5) };
+}
+function convert(vin, cfg, E, gauss) {
+  let v = vin; const recs = new Array(cfg.M);
+  for (let k = 0; k < cfg.M; k++) {
+    let vs = v;
+    if (E && E.nz) { const n = E.nz(k); if (n) vs += n * gauss(); }
+    const e = evalStage(cfg.type, vs, E && E.off ? E.off(k) : null, E && E.dl ? E.dl(k) : 0, E && E.A ? E.A(k) : Infinity);
+    recs[k] = { vin: vs, i: e.i, D: e.D, vres: e.r };
+    v = e.r;
+  }
+  const L = 1 << cfg.b;
+  return { recs, f: clamp(Math.floor((v + 1) / 2 * L), 0, L - 1), vlast: v };
+}
+function recon(res, cfg, E, cal) {
+  const G = cfg.G, L = 1 << cfg.b;
+  let est = (res.f + .5) / L * 2 - 1;
+  for (let k = cfg.M - 1; k >= 0; k--) {
+    const D = res.recs[k].D;
+    if (cal && E) {
+      const dl = E.dl ? E.dl(k) : 0, Ag = E.A ? E.A(k) : Infinity;
+      est = (est * (1 + G / Ag) + (1 + dl) * D) / (1 + (G - 1) * (1 + dl));
+    } else est = (est + D) / G;
+  }
+  const code = clamp(Math.round((est + 1) * (1 << (cfg.N - 1)) - .5), 0, (1 << cfg.N) - 1);
+  return { code, est };
+}
+const idealCode = (vin, N) => clamp(Math.floor((vin + 1) * (1 << (N - 1))), 0, (1 << N) - 1);
+
+/* ---------- generic residue plot ---------- */
+function plotResidue(cv, o) {
+  const s = ST[o.type];
+  const { ctx, w, h } = prep(cv);
+  const box = { x: 44, y: 22, w: w - 44 - 12, h: h - 22 - 36 };
+  const ym = 1.6;
+  const { X, Y } = axes(ctx, { ...box, xmin: -1, xmax: 1, ymin: -ym, ymax: ym, xt: [-1, -.5, 0, .5, 1], yt: [-1.5, -1, -.5, 0, .5, 1, 1.5], xl: 'V_in / V', yl: 'V_res / V' });
+  cv._inv = px => clamp((px - box.x) / box.w * 2 - 1, -1, 1);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+  ctx.fillStyle = A(C.err, .08);
+  ctx.fillRect(box.x, Y(ym), box.w, Y(1) - Y(ym));
+  ctx.fillRect(box.x, Y(-1), box.w, Y(-ym) - Y(-1));
+  ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+  ctx.strokeStyle = A(C.err, .7);
+  for (const yv of [1, -1]) { ctx.beginPath(); ctx.moveTo(box.x, Y(yv)); ctx.lineTo(box.x + box.w, Y(yv)); ctx.stroke(); }
+  const halo = (t, x, y) => { ctx.save(); ctx.setLineDash([]); ctx.lineWidth = 4; ctx.strokeStyle = C.panel; ctx.lineJoin = 'round'; ctx.strokeText(t, x, y); ctx.restore(); ctx.fillText(t, x, y); };
+  ctx.font = '11px ' + SANS; ctx.fillStyle = C.err; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('超出下一级量程', box.x + 6, Y(ym) + 5);
+  if (isRedundant(o.type)) {
+    ctx.strokeStyle = A(C.muted, .8);
+    for (const yv of [.5, -.5]) { ctx.beginPath(); ctx.moveTo(box.x, Y(yv)); ctx.lineTo(box.x + box.w, Y(yv)); ctx.stroke(); }
+  }
+  const off = o.off || null;
+  s.th.forEach((t, j) => {
+    const ta = t + (off ? off[j] : 0);
+    if (off && Math.abs(off[j]) > 1e-9) { ctx.strokeStyle = A(C.muted, .35); ctx.beginPath(); ctx.moveTo(X(t), box.y); ctx.lineTo(X(t), box.y + box.h); ctx.stroke(); }
+    ctx.strokeStyle = A(C.ink, .45); ctx.beginPath(); ctx.moveTo(X(ta), box.y); ctx.lineTo(X(ta), box.y + box.h); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  const n = Math.max(500, Math.round(box.w * 2));
+  const curve = (offA, dl, Ag, color, lw, onlyOver) => {
+    ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineJoin = 'round';
+    ctx.beginPath(); let prevI = -1, prevOver = false;
+    for (let p = 0; p <= n; p++) {
+      const v = -1 + 2 * p / n, e = evalStage(o.type, v, offA, dl, Ag);
+      const over = Math.abs(e.r) > 1 + 1e-9;
+      const x = X(v), y = Y(e.r);
+      if (e.i !== prevI || (onlyOver && (!over || !prevOver))) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      prevI = e.i; prevOver = over;
+    }
+    ctx.stroke();
+  };
+  if (o.ghost) curve(null, 0, Infinity, A(C.muted, .6), 1.4);
+  curve(off, o.dl || 0, o.A ?? Infinity, C.accent, 2.2);
+  curve(off, o.dl || 0, o.A ?? Infinity, C.err, 3.2, true);
+  if (isRedundant(o.type)) {
+    ctx.font = '11px ' + SANS; ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    halo('理想残差 ±Vref/2', box.x + box.w - 6, Y(.5) - 3);
+  }
+  if (o.vin != null) {
+    const e = evalStage(o.type, o.vin, off, o.dl || 0, o.A ?? Infinity);
+    ctx.setLineDash([2, 3]); ctx.strokeStyle = A(C.ink, .55); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X(o.vin), box.y + box.h); ctx.lineTo(X(o.vin), Y(e.r)); ctx.lineTo(box.x, Y(e.r)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(X(o.vin), Y(e.r), 5.5, 0, 7); ctx.fill();
+    ctx.strokeStyle = C.panel; ctx.lineWidth = 2; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+const redraws = [];
+const onRedraw = f => redraws.push(f);
+function redrawAll() { readColors(); redraws.forEach(f => f()); }
+
+/* =========== Ch1 comparison =========== */
+(() => {
+  const sl = $('#n-bits'), out = $('#n-bits-o'), box = $('#cmp-rows');
+  function render() {
+    const N = +sl.value; out.textContent = N + ' 位';
+    const rows = [
+      { k: 'Flash', c: Math.pow(2, N) - 1, cy: '1 个周期', th: 'f_clk' },
+      { k: 'SAR', c: 1, cy: (N + 1) + ' 个周期', th: 'f_clk / ' + (N + 1) },
+      { k: '流水线 · ' + (N - 2) + ' 级', c: 2 * (N - 2) + 3, cy: '延迟约 ' + (N / 2) + ' 周期', th: 'f_clk' }
+    ];
+    const max = 16;
+    box.innerHTML = '<div class="cmp-row hd"><div>架构</div><div>比较器数量（对数刻度）</div><div>完成一个样本</div><div>吞吐率</div></div>' +
+      rows.map(r => `<div class="cmp-row"><div class="cmp-k">${r.k}</div><div class="cmp-bar"><span style="width:${Math.max(1.2, Math.log2(r.c + 1) / max * 80)}%"></span><b>${r.c.toLocaleString('en-US')}</b></div><div class="cmp-cy">${r.cy}</div><div class="cmp-th">${r.th}</div></div>`).join('');
+  }
+  sl.addEventListener('input', render); render();
+})();
+
+/* =========== Ch2 ruler =========== */
+const W2 = { vin: 0.372, type: '1.5', playing: false, dir: 1 };
+(() => {
+  const cv = $('#ruler'), sl = $('#w2-vin'), out = $('#w2-vin-o');
+  function setVin(v) { W2.vin = Math.round(v * 1000) / 1000; sl.value = W2.vin; draw(); }
+  function draw() {
+    out.textContent = fv(W2.vin) + ' V';
+    const cfg = cfgFor(W2.type), s = ST[W2.type];
+    $('#w2-cfg').textContent = `${cfg.M} 级 × ${W2.type} 位 + ${cfg.b} 位 Flash = ${cfg.N} 位`;
+    const res = convert(W2.vin, cfg, null);
+    const rows = cfg.M + 1;
+    const narrow = cv.clientWidth < 640;
+    const rowH = narrow ? 62 : 52, top = 30, base = narrow ? 34 : 24;
+    const { ctx, w } = prep(cv, top + rows * rowH);
+    const xL = narrow ? 54 : 74, xR = w - (narrow ? 12 : 230);
+    const X = v => xL + (v + 1) / 2 * (xR - xL);
+    cv._inv = px => clamp((px - xL) / (xR - xL) * 2 - 1, -1, 1);
+    cv._hit = (x, y) => y < top + rowH;
+    ctx.font = '11px ' + MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    for (const t of [-1, -.5, 0, .5, 1]) {
+      ctx.fillStyle = C.muted; ctx.fillText(tk(t) + (Math.abs(t) === 1 ? ' V' : ''), X(t), 14);
+      ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(Math.round(X(t)) + .5, 20); ctx.lineTo(Math.round(X(t)) + .5, top + rows * rowH - 6); ctx.stroke();
+    }
+    const L = 1 << cfg.b, flashTh = []; for (let j = 1; j < L; j++) flashTh.push(-1 + 2 * j / L);
+    const yOf = k => top + k * rowH + base;
+    for (let k = 0; k < rows; k++) {
+      const isF = k === cfg.M, y = yOf(k);
+      const th = isF ? flashTh : s.th, edges = [-1, ...th, 1];
+      const vk = isF ? res.vlast : res.recs[k].vin;
+      const sel = isF ? res.f : res.recs[k].i;
+      const colOf = z => { if (isF) return C.ch1; const D = s.Dv[z]; return D < 0 ? C.ch2 : D > 0 ? C.ch3 : C.muted; };
+      for (let z = 0; z < edges.length - 1; z++) {
+        const D = isF ? 0 : s.Dv[z];
+        const baseA = isF ? (z % 2 ? .10 : .18) : (D === 0 ? .14 : .10 + .05 * Math.abs(D));
+        ctx.fillStyle = A(colOf(z), z === sel ? .45 : baseA);
+        ctx.fillRect(X(edges[z]), y - 9, X(edges[z + 1]) - X(edges[z]), 18);
+      }
+      ctx.strokeStyle = colOf(sel); ctx.lineWidth = 1.5;
+      ctx.strokeRect(X(edges[sel]) + .75, y - 9 + .75, X(edges[sel + 1]) - X(edges[sel]) - 1.5, 16.5);
+      ctx.strokeStyle = A(C.ink, .6); ctx.lineWidth = 1;
+      for (const t of th) { const px = Math.round(X(t)) + .5; ctx.beginPath(); ctx.moveTo(px, y - 12); ctx.lineTo(px, y + 12); ctx.stroke(); }
+      ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.moveTo(X(-1) + .5, y - 12); ctx.lineTo(X(-1) + .5, y + 12); ctx.moveTo(X(1) - .5, y - 12); ctx.lineTo(X(1) - .5, y + 12); ctx.stroke();
+      // funnel to next row
+      if (k < rows - 1) {
+        const a = edges[sel], b = edges[sel + 1], D = s.Dv[sel], G = s.G;
+        const a2 = clamp(G * a - D, -1, 1), b2 = clamp(G * b - D, -1, 1), yN = yOf(k + 1);
+        ctx.fillStyle = A(colOf(sel), .13);
+        ctx.beginPath(); ctx.moveTo(X(a), y + 9); ctx.lineTo(X(b), y + 9); ctx.lineTo(X(b2), yN - 9); ctx.lineTo(X(a2), yN - 9); ctx.closePath(); ctx.fill();
+        if (!narrow) {
+          const vn = k + 1 === cfg.M ? res.vlast : res.recs[k + 1].vin;
+          ctx.setLineDash([3, 3]); ctx.strokeStyle = A(C.ink, .45); ctx.beginPath(); ctx.moveTo(X(vk), y + 6); ctx.lineTo(X(clamp(vn, -1, 1)), yN - 6); ctx.stroke(); ctx.setLineDash([]);
+        }
+      }
+      ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(X(clamp(vk, -1.02, 1.02)), y, 5, 0, 7); ctx.fill();
+      ctx.strokeStyle = C.panel; ctx.lineWidth = 2; ctx.stroke();
+      ctx.font = '600 12px ' + SANS; ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(isF ? 'Flash' : '第 ' + (k + 1) + ' 级', 6, y);
+      let info;
+      if (isF) info = `f = ${bin(res.f, cfg.b)}   (Vres,${cfg.M} = ${fv(res.vlast)})`;
+      else { const r = res.recs[k]; info = `D=${sgn(r.D)}  d=${bin(r.i, s.bits)}  Vres=${fv(r.vres)}`; }
+      ctx.font = (narrow ? '11px ' : '12px ') + MONO;
+      if (narrow) { ctx.fillStyle = C.muted; ctx.textBaseline = 'alphabetic'; ctx.fillText(info, xL, y - 15); }
+      else { ctx.fillStyle = C.ink; ctx.fillText(info, xR + 16, y); }
+    }
+    const rc = recon(res, cfg, null, false), code = rc.code, lsb = 2 / (1 << cfg.N);
+    const bs = bin(code, cfg.N);
+    $('#w2-out').innerHTML = `<span><span class="k">输出码</span><b>${bs.slice(0, 2)} ${bs.slice(2, 6)} ${bs.slice(6)}</b> = <b>${code}</b></span>` +
+      `<span><span class="k">重建值</span><b>${fv(rc.est, 4)} V</b></span>` +
+      `<span><span class="k">量化误差</span><b>${fv((W2.vin - rc.est) / lsb, 2)} LSB</b></span>`;
+    const terms = res.recs.map((r, k) => `${sgn(r.D)}/${Math.pow(s.G, k + 1)}`).join(' ');
+    $('#w2-sum').textContent = `V_in ≈ ${terms}  + Flash 余量  (单位 V_ref)`;
+  }
+  sl.addEventListener('input', () => { W2.vin = +sl.value; draw(); });
+  seg($('#w2-type'), v => { W2.type = v; draw(); });
+  dragOn(cv, setVin);
+  const btn = $('#w2-play');
+  function tick() {
+    if (!W2.playing) return;
+    let v = W2.vin + W2.dir * 0.0025;
+    if (v > .995) { v = .995; W2.dir = -1; } if (v < -.995) { v = -.995; W2.dir = 1; }
+    setVin(v); requestAnimationFrame(tick);
+  }
+  btn.addEventListener('click', () => {
+    W2.playing = !W2.playing; btn.setAttribute('aria-pressed', W2.playing); btn.textContent = W2.playing ? '暂停' : '自动扫描';
+    if (W2.playing) requestAnimationFrame(tick);
+  });
+  onRedraw(draw);
+})();
+
+/* =========== Ch3 residue explorer + schematic =========== */
+const W3 = { vin: 0.6, type: '1.5', ph: 1 };
+(() => {
+  const cv = $('#res3'), sl = $('#w3-vin'), out = $('#w3-vin-o');
+  function draw() {
+    out.textContent = fv(W3.vin) + ' V';
+    const s = ST[W3.type], G = s.G;
+    $('#w3-tag').textContent = W3.type + ' 位级';
+    plotResidue(cv, { type: W3.type, vin: W3.vin });
+    const e = evalStage(W3.type, W3.vin, null, 0, Infinity);
+    const red = isRedundant(W3.type);
+    $('#w3-info').innerHTML =
+      `<dt>比较器</dt><dd>${s.th.length} 个</dd>` +
+      `<dt>阈值 / Vref</dt><dd>${s.th.map(frac).join(', ')}</dd>` +
+      `<dt>D 取值</dt><dd>${s.Dv.map(sgn).join(', ')}</dd>` +
+      `<dt>DAC 电平 / Vref</dt><dd>${s.Dv.map(d => frac(d / G)).join(', ')}</dd>` +
+      `<dt>级间增益 G</dt><dd>${G}</dd>` +
+      `<dt>有效位数</dt><dd>${Math.log2(G)} 位${red ? '（另有冗余）' : ''}</dd>` +
+      `<dt>容许失调</dt><dd>${red ? '±Vref/' + (2 * G) + ' = ±' + Math.round(1000 / (2 * G)) + ' mV' : '0（无余量）'}</dd>`;
+    $('#w3-eq').innerHTML = `V<sub>res</sub> = ${G}×(${fv(W3.vin)}) − (${sgn(e.D)})×1 V = <b>${fv(e.r)} V</b>`;
+    drawSch();
+  }
+  sl.addEventListener('input', () => { W3.vin = +sl.value; draw(); });
+  seg($('#w3-type'), v => { W3.type = v; draw(); });
+  dragOn(cv, v => { W3.vin = Math.round(v * 1000) / 1000; sl.value = W3.vin; draw(); });
+
+  const sch = $('#sch');
+  const sws = $$('.sw', sch).map(g => ({ g, ph: +g.dataset.ph, a: g.dataset.a.split(',').map(Number), b: g.dataset.b.split(',').map(Number), lev: $('.lev', g) }));
+  function drawSch() {
+    sch.dataset.ph = W3.ph;
+    for (const s of sws) {
+      const closed = s.ph === W3.ph;
+      let [bx, by] = s.b;
+      if (!closed) {
+        const dx = bx - s.a[0], dy = by - s.a[1], an = -0.55;
+        bx = s.a[0] + (dx * Math.cos(an) - dy * Math.sin(an)) * .92;
+        by = s.a[1] + (dx * Math.sin(an) + dy * Math.cos(an)) * .92;
+      }
+      s.lev.setAttribute('x1', s.a[0]); s.lev.setAttribute('y1', s.a[1]);
+      s.lev.setAttribute('x2', bx.toFixed(1)); s.lev.setAttribute('y2', by.toFixed(1));
+    }
+    const v = W3.vin, D = v > .25 ? 1 : v < -.25 ? -1 : 0, vo = 2 * v - D;
+    $('#sv-vin').textContent = fv(v) + ' V';
+    $('#sv-d').textContent = 'D=' + sgn(D);
+    $('#sv-dac').textContent = 'D·Vref = ' + sgn(D) + ' V';
+    $('#sv-out').textContent = W3.ph === 2 ? fv(vo) + ' V' : '复位';
+    $('#pc-q').innerHTML = `Q = (C<sub>s</sub>+C<sub>f</sub>)·V<sub>in</sub> = 2C × (${fv(v)} V)`;
+    $('#pc-d').textContent = (v > .25 ? 'V_in > +Vref/4，' : v < -.25 ? 'V_in < −Vref/4，' : '−Vref/4 ≤ V_in ≤ +Vref/4，') + 'D = ' + sgn(D);
+    $('#pc-out').innerHTML = `V<sub>out</sub> = 2×(${fv(v)}) − (${sgn(D)})×1 = <b>${fv(vo)} V</b>`;
+    $$('.pc').forEach(p => p.classList.toggle('on', +p.dataset.ph === W3.ph));
+  }
+  seg($('#ph-seg'), v => { W3.ph = +v; drawSch(); });
+  onRedraw(draw);
+})();
+
+/* =========== Ch4 redundancy =========== */
+const W4 = { type: '1', off: 0.06 };
+(() => {
+  const sl = $('#w4-off'), out = $('#w4-off-o');
+  function draw() {
+    out.textContent = mV(W4.off);
+    const s = ST[W4.type], off = s.th.map(() => W4.off);
+    plotResidue($('#res4'), { type: W4.type, off, ghost: true });
+    const cfg = cfgFor(W4.type, 6), E = { off: k => k === 0 ? off : null };
+    const cv = $('#tf4'), { ctx, w, h } = prep(cv);
+    const K = 2048, NC = 64, codes = new Int16Array(K), errs = new Int16Array(K), hits = new Uint16Array(NC);
+    let maxE = 0;
+    for (let t = 0; t < K; t++) {
+      const vin = -1 + (t + .5) / K * 2;
+      const c = recon(convert(vin, cfg, E), cfg).code;
+      codes[t] = c; hits[c]++; errs[t] = c - idealCode(vin, 6);
+      maxE = Math.max(maxE, Math.abs(errs[t]));
+    }
+    let miss = 0; for (let c = 0; c < NC; c++) if (!hits[c]) miss++;
+    const x0 = 40, wB = w - x0 - 12, t1 = 20, h1 = (h - 20 - 30 - 34) * .66, t2 = t1 + h1 + 30, h2 = h - t2 - 30;
+    const a1 = axes(ctx, { x: x0, y: t1, w: wB, h: h1, xmin: -1, xmax: 1, ymin: 0, ymax: 63, xt: [-1, -.5, 0, .5, 1], yt: [0, 16, 32, 48, 63], noXLab: true, yl: '输出码' });
+    const er = Math.max(2, maxE);
+    const a2 = axes(ctx, { x: x0, y: t2, w: wB, h: h2, xmin: -1, xmax: 1, ymin: -er, ymax: er, xt: [-1, -.5, 0, .5, 1], yt: [-er, 0, er], yl: '误差 / LSB', xl: 'V_in / V' });
+    ctx.save();
+    const stair = (getC, color, lw) => {
+      ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath();
+      let prev = getC(0); ctx.moveTo(a1.X(-1), a1.Y(prev));
+      for (let t = 1; t < K; t++) { const vin = -1 + t / K * 2, c = getC(t); if (c !== prev) { ctx.lineTo(a1.X(vin), a1.Y(prev)); ctx.lineTo(a1.X(vin), a1.Y(c)); prev = c; } }
+      ctx.lineTo(a1.X(1), a1.Y(prev)); ctx.stroke();
+    };
+    stair(t => idealCode(-1 + (t + .5) / K * 2, 6), A(C.muted, .7), 1.2);
+    stair(t => codes[t], C.accent, 1.8);
+    ctx.fillStyle = A(C.err, .9);
+    for (let t = 0; t < K; t++) if (errs[t]) ctx.fillRect(a1.X(-1 + (t + .5) / K * 2) - .6, a1.Y(codes[t]) - 1.5, 1.6, 3);
+    ctx.strokeStyle = maxE ? C.err : C.ok; ctx.lineWidth = 1.6; ctx.beginPath();
+    for (let t = 0; t < K; t++) { const x = a2.X(-1 + (t + .5) / K * 2), y = a2.Y(errs[t]); t ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke(); ctx.restore();
+    const pill = $('#w4-pill');
+    if (!maxE) { pill.className = 'pill ok'; pill.textContent = '输出正确：与理想 6 位 ADC 完全一致'; }
+    else { pill.className = 'pill bad'; pill.textContent = `出错：最大误差 ${maxE} LSB` + (miss ? `，失码 ${miss} 个` : ''); }
+    $('#w4-hint').innerHTML = W4.type === '1'
+      ? '<span><span class="k">1 位级</span>阈值在 0，没有余量：残差一旦越过 ±V<sub>ref</sub>，后级就会饱和。任何失调都会让阈值附近的一小段输入出错，失调超过约 1 LSB（31 mV）后开始出现失码。</span>'
+      : `<span><span class="k">1.5 位级</span>阈值 ±V<sub>ref</sub>/4，容许失调 ±250 mV。当前失调 ${mV(W4.off)}，${Math.abs(W4.off) <= .25 ? '仍在容许范围内' : '<b style="color:var(--err)">已超出容许范围</b>'}。</span>`;
+  }
+  sl.addEventListener('input', () => { W4.off = +sl.value; draw(); });
+  seg($('#w4-type'), v => { W4.type = v; draw(); });
+  onRedraw(draw);
+})();
+
+/* =========== Ch5 digital correction =========== */
+const W5 = { vin: 0.32, off: 0.12 };
+(() => {
+  const sv = $('#w5-vin'), so = $('#w5-off');
+  const cfg = cfgFor('1.5', 10), s = ST['1.5'];
+  function grid(res, other) {
+    let h = '<div class="lab"></div>';
+    for (let b = 9; b >= 0; b--) h += `<div class="hd">${1 << b}</div>`;
+    let code = 0;
+    res.recs.forEach((r, k) => {
+      const kk = k + 1, d = r.i, differ = other && other.recs[k].i !== d;
+      code += d * (1 << (9 - kk));
+      h += `<div class="lab">第${kk}级 <em>D=${sgn(r.D)}</em></div>`;
+      for (let c = 0; c < 10; c++) {
+        let bit = null;
+        if (c === kk - 1) bit = (d >> 1) & 1; else if (c === kk) bit = d & 1;
+        h += bit === null ? '<div class="e">·</div>' : `<div class="b ${bit ? 'one' : 'zero'}${differ ? ' diff' : ''}">${bit}</div>`;
+      }
+    });
+    code += res.f;
+    const fdiff = other && other.f !== res.f;
+    h += '<div class="lab">Flash <em>f</em></div>';
+    for (let c = 0; c < 10; c++) {
+      let bit = null; if (c === 8) bit = (res.f >> 1) & 1; else if (c === 9) bit = res.f & 1;
+      h += bit === null ? '<div class="e">·</div>' : `<div class="b ${bit ? 'one' : 'zero'}${fdiff ? ' diff' : ''}">${bit}</div>`;
+    }
+    h += '<div class="rule"></div><div class="lab"><em>D<sub>out</sub></em></div>';
+    const bs = bin(code, 10);
+    for (let c = 0; c < 10; c++) h += `<div class="sum">${bs[c]}</div>`;
+    return { h, code };
+  }
+  function draw() {
+    $('#w5-vin-o').textContent = fv(W5.vin) + ' V';
+    $('#w5-off-o').textContent = mV(W5.off);
+    $('#w5-b-h').textContent = '各级比较器失调 ' + mV(W5.off);
+    const off = s.th.map(() => W5.off);
+    const r0 = convert(W5.vin, cfg, null), r1 = convert(W5.vin, cfg, { off: () => off });
+    const g0 = grid(r0, null), g1 = grid(r1, r0);
+    $('#w5-a').innerHTML = g0.h; $('#w5-b').innerHTML = g1.h;
+    const nd = r1.recs.filter((r, k) => r.i !== r0.recs[k].i).length + (r1.f !== r0.f ? 1 : 0);
+    $('#w5-a-d').innerHTML = `D<sub>out</sub> = <b>${g0.code}</b>`;
+    $('#w5-b-d').innerHTML = `D<sub>out</sub> = <b>${g1.code}</b> · ${nd} 行码字与左边不同`;
+    const pill = $('#w5-pill');
+    if (g0.code === g1.code) { pill.className = 'pill ok'; pill.textContent = `两边结果相同：${g0.code}`; }
+    else { pill.className = 'pill bad'; pill.textContent = `失调超过 ±Vref/4，结果出错：${g0.code} ≠ ${g1.code}`; }
+  }
+  sv.addEventListener('input', () => { W5.vin = +sv.value; draw(); });
+  so.addEventListener('input', () => { W5.off = +so.value; draw(); });
+  draw();
+})();
+
+/* =========== Ch6 timing =========== */
+(() => {
+  const H = 16, M = 4, SC = ['ch1', 'ch2', 'ch3', 'accent', 'ok'];
+  const rows = [{ n: 'S/H', s: 0 }, { n: '第 1 级', s: 1 }, { n: '第 2 级', s: 2 }, { n: '第 3 级', s: 3 }, { n: '第 4 级', s: 4 }, { n: 'Flash', s: 5 }, { n: '对齐输出', s: 6 }];
+  const T = { h: 6, sel: 1, timer: null };
+  function cell(s, h) {
+    const d = h - s;
+    if (s === 0) return d % 2 === 0 ? { n: d / 2, t: '跟踪' } : { n: (d - 1) / 2, t: '保持' };
+    if (s <= M) { if (d < 0) return null; return d % 2 === 0 ? { n: d / 2, t: '采样' } : { n: (d - 1) / 2, t: '放大' }; }
+    if (s === M + 1) { if (d < 0 || d % 2) return null; return { n: d / 2, t: '比较' }; }
+    const e = h - (M + 2); if (e < 0 || e % 2) return null; return { n: e / 2, t: '输出' };
+  }
+  const tt = $('#tt');
+  let html = '<thead><tr><th class="rh"></th>';
+  for (let c = 0; c < H / 2; c++) html += `<th colspan="2" class="cyc">周期 ${c}</th>`;
+  html += '</tr><tr><th class="rh">时钟</th>';
+  for (let h = 0; h < H; h++) html += `<th class="ph ${h % 2 ? 'p2' : 'p1'}" data-h="${h}">${h % 2 ? 'φ2' : 'φ1'}</th>`;
+  html += '</tr></thead><tbody>';
+  for (const r of rows) {
+    html += `<tr><th class="rh">${r.n}</th>`;
+    for (let h = 0; h < H; h++) {
+      const c = cell(r.s, h);
+      html += c ? `<td class="c" data-h="${h}" data-n="${c.n}" style="--sc:var(--${SC[c.n % SC.length]})"><span>${c.t}</span><b>#${c.n}</b></td>` : `<td class="e" data-h="${h}"></td>`;
+    }
+    html += '</tr>';
+  }
+  tt.innerHTML = html + '</tbody>';
+  const cells = $$('[data-h]', tt);
+  function update() {
+    for (const el of cells) {
+      el.classList.toggle('now', +el.dataset.h === T.h);
+      if (el.dataset.n != null) el.classList.toggle('sel', +el.dataset.n === T.sel);
+    }
+    const parts = rows.map(r => { const c = cell(r.s, T.h); return c ? `${r.n} ${c.t} #${c.n}` : null; }).filter(Boolean);
+    $('#t6-narr').innerHTML = `<span class="t">t = 半周期 ${T.h}（${T.h % 2 ? 'φ2' : 'φ1'}）</span>${parts.join(' · ')}`;
+  }
+  function setSel(n) {
+    T.sel = n; update();
+    $('#t6-align').textContent = `样本 #${n} 的码字：第1级在半周期 ${2 * n + 1} 末得到，第4级在 ${2 * n + 4} 末，Flash 在 ${2 * n + 5} 末；为了在 ${2 * n + 6} 一起相加，第1~4级码字分别要再寄存 4/3/2/1 个半周期。`;
+  }
+  tt.addEventListener('click', e => { const td = e.target.closest('td.c'); if (td) setSel(+td.dataset.n); });
+  const step = () => { T.h = (T.h + 1) % H; update(); };
+  $('#t6-step').addEventListener('click', step);
+  const pb = $('#t6-play');
+  pb.addEventListener('click', () => {
+    if (T.timer) { clearInterval(T.timer); T.timer = null; } else T.timer = setInterval(step, 750);
+    pb.setAttribute('aria-pressed', !!T.timer); pb.textContent = T.timer ? '暂停' : '播放';
+  });
+  setSel(T.sel);
+})();
+
+/* =========== Ch7 lab =========== */
+const PRESETS = {
+  ideal:    { type: '1.5', scope: 'all',   sig: 0,  dl: 0,  AdB: 100, nz: 0, cal: false },
+  offset:   { type: '1.5', scope: 'all',   sig: 60, dl: 0,  AdB: 100, nz: 0, cal: false },
+  offset1b: { type: '1',   scope: 'all',   sig: 60, dl: 0,  AdB: 100, nz: 0, cal: false },
+  cap:      { type: '1.5', scope: 'first', sig: 20, dl: -1, AdB: 100, nz: 0, cal: false },
+  capcal:   { type: '1.5', scope: 'first', sig: 20, dl: -1, AdB: 100, nz: 0, cal: true },
+  opamp:    { type: '1.5', scope: 'all',   sig: 20, dl: 0,  AdB: 50,  nz: 0, cal: false },
+  noise:    { type: '1.5', scope: 'all',   sig: 20, dl: 0,  AdB: 100, nz: 1, cal: false }
+};
+const L = { ...PRESETS.cap, seed: 7, res: null };
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+    if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang), hl = len >> 1;
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let j = 0; j < hl; j++) {
+        const a = i + j, b = a + hl;
+        const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t;
+      }
+    }
+  }
+}
+(() => {
+  const ids = { sig: '#lab-sig', dl: '#lab-dl', AdB: '#lab-a', nz: '#lab-nz' };
+  function syncUI() {
+    segSet($('#lab-type'), L.type); segSet($('#lab-scope'), L.scope);
+    $('#lab-cal').checked = L.cal;
+    for (const k in ids) $(ids[k]).value = L[k];
+    $('#lab-sig-o').textContent = L.sig + ' mV';
+    $('#lab-dl-o').textContent = (L.dl > 0 ? '+' : L.dl < 0 ? MINUS : '') + Math.abs(L.dl).toFixed(2) + ' %';
+    $('#lab-a-o').textContent = L.AdB >= 100 ? '∞（理想）' : L.AdB + ' dB';
+    $('#lab-nz-o').textContent = L.nz.toFixed(2) + ' mV';
+  }
+  function compute() {
+    const cfg = cfgFor(L.type, 10), s = ST[L.type];
+    const go = gaussFn(mulberry32(L.seed * 9973 + 1));
+    const offs = []; for (let k = 0; k < cfg.M; k++) offs.push(s.th.map(() => go() * L.sig / 1000));
+    const inS = k => L.scope === 'all' || k === 0;
+    const Av = L.AdB >= 100 ? Infinity : Math.pow(10, L.AdB / 20);
+    const E = { off: k => inS(k) ? offs[k] : null, dl: k => inS(k) ? L.dl / 100 : 0, A: k => inS(k) ? Av : Infinity, nz: k => inS(k) ? L.nz / 1000 : 0 };
+    const NC = 1 << cfg.N, K = NC * 16, hits = new Uint32Array(NC);
+    const gn = gaussFn(mulberry32(424242));
+    for (let t = 0; t < K; t++) hits[recon(convert(-1 + (t + .5) / K * 2, cfg, E, gn), cfg, E, L.cal).code]++;
+    let tot = 0; for (let c = 1; c < NC - 1; c++) tot += hits[c];
+    const avg = tot / (NC - 2), dnl = new Float64Array(NC), inl = new Float64Array(NC);
+    let miss = 0, acc = 0;
+    for (let c = 1; c < NC - 1; c++) { dnl[c] = hits[c] / avg - 1; if (!hits[c]) miss++; acc += dnl[c]; inl[c] = acc - dnl[c] / 2; }
+    const i1 = inl[1], i2 = inl[NC - 2];
+    for (let c = 1; c < NC - 1; c++) inl[c] -= i1 + (i2 - i1) * (c - 1) / (NC - 3);
+    const NF = 4096, J = 401, amp = Math.pow(10, -.5 / 20);
+    const re = new Float64Array(NF), im = new Float64Array(NF), gn2 = gaussFn(mulberry32(777));
+    for (let n = 0; n < NF; n++) re[n] = recon(convert(amp * Math.sin(2 * Math.PI * J * n / NF + .3), cfg, E, gn2), cfg, E, L.cal).code - (NC - 1) / 2;
+    fft(re, im);
+    const half = NF / 2, P = new Float64Array(half + 1);
+    for (let k = 0; k <= half; k++) P[k] = re[k] * re[k] + im[k] * im[k];
+    let nd = 0, spur = 0; for (let k = 1; k <= half; k++) if (k !== J) { nd += P[k]; if (P[k] > spur) spur = P[k]; }
+    const ref = Math.pow((NC / 2) * (NF / 2), 2), db = new Float64Array(half + 1);
+    for (let k = 0; k <= half; k++) db[k] = 10 * Math.log10(P[k] / ref + 1e-20);
+    const sndr = 10 * Math.log10(P[J] / nd), sfdr = 10 * Math.log10(P[J] / Math.max(spur, 1e-30));
+    let dmin = 0, dmax = 0, imin = 0, imax = 0;
+    for (let c = 1; c < NC - 1; c++) { dmin = Math.min(dmin, dnl[c]); dmax = Math.max(dmax, dnl[c]); imin = Math.min(imin, inl[c]); imax = Math.max(imax, inl[c]); }
+    L.res = { cfg, offs, E, NC, hits, dnl, inl, miss, db, J, NF, sndr, sfdr, enob: (sndr + .5 - 1.76) / 6.02, dmin, dmax, imin, imax, Av };
+  }
+  function drawLab() {
+    const R = L.res; if (!R) return;
+    plotResidue($('#lab-res'), { type: L.type, off: R.E.off(0), dl: R.E.dl(0), A: R.E.A(0), ghost: true });
+    // DNL / INL
+    {
+      const cv = $('#lab-dnl'), { ctx, w, h } = prep(cv);
+      const x0 = 44, wB = w - x0 - 12, gap = 34, ph = (h - 20 - gap - 34) / 2;
+      const r1 = Math.max(1, Math.ceil(Math.max(-R.dmin, R.dmax) * 2) / 2), r2 = Math.max(1, Math.ceil(Math.max(-R.imin, R.imax) * 2) / 2);
+      const top = R.NC - 1, xt = [0, 256, 512, 768, 1023];
+      const a1 = axes(ctx, { x: x0, y: 20, w: wB, h: ph, xmin: 0, xmax: top, ymin: -r1, ymax: r1, xt, yt: [-r1, 0, r1], noXLab: true, yl: 'DNL / LSB' });
+      const a2 = axes(ctx, { x: x0, y: 20 + ph + gap, w: wB, h: ph, xmin: 0, xmax: top, ymin: -r2, ymax: r2, xt, yt: [-r2, 0, r2], yl: 'INL / LSB', xl: '输出码' });
+      ctx.save();
+      ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.beginPath();
+      for (let c = 1; c < top; c++) { const x = Math.round(a1.X(c)) + .5; ctx.moveTo(x, a1.Y(0)); ctx.lineTo(x, a1.Y(R.dnl[c])); }
+      ctx.stroke();
+      ctx.fillStyle = C.err;
+      for (let c = 1; c < top; c++) if (!R.hits[c]) { ctx.beginPath(); ctx.arc(a1.X(c), a1.Y(-1), 3, 0, 7); ctx.fill(); }
+      ctx.strokeStyle = C.ch3; ctx.lineWidth = 1.4; ctx.beginPath();
+      for (let c = 1; c < top; c++) { const x = a2.X(c), y = a2.Y(R.inl[c]); c === 1 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+      ctx.stroke(); ctx.restore();
+    }
+    // FFT
+    {
+      const cv = $('#lab-fft'), { ctx, w, h } = prep(cv);
+      const box = { x: 44, y: 18, w: w - 44 - 12, h: h - 18 - 36 };
+      const { X, Y } = axes(ctx, { ...box, xmin: 0, xmax: .5, ymin: -130, ymax: 0, xt: [0, .1, .2, .3, .4, .5], yt: [-120, -100, -80, -60, -40, -20, 0], xl: 'f / f_s', yl: 'dBFS' });
+      const half = R.NF / 2, cols = Math.max(1, Math.floor(box.w));
+      ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+      ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.beginPath();
+      for (let px = 0; px < cols; px++) {
+        const k0 = Math.max(1, Math.floor(px / cols * half)), k1 = Math.max(k0, Math.floor((px + 1) / cols * half));
+        let m = -200; for (let k = k0; k <= k1 && k <= half; k++) m = Math.max(m, R.db[k]);
+        const x = box.x + px + .5; ctx.moveTo(x, box.y + box.h); ctx.lineTo(x, Y(Math.max(m, -130)));
+      }
+      ctx.stroke();
+      ctx.font = '11px ' + MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.fillText('基波', X(R.J / R.NF) + 5, Y(-8));
+      ctx.textAlign = 'center';
+      for (let hh = 2; hh <= 5; hh++) {
+        let kh = (hh * R.J) % R.NF; if (kh > half) kh = R.NF - kh;
+        if (R.db[kh] > -95) { ctx.fillStyle = C.err; ctx.fillText('H' + hh, X(kh / R.NF), Y(R.db[kh]) - 3); }
+      }
+      ctx.restore();
+    }
+    const m = R, cls = m.enob >= 9.8 ? 'good' : m.enob >= 9 ? 'mid' : 'poor';
+    const f1 = v => v.toFixed(1), f2 = v => (v < 0 ? MINUS : '+') + Math.abs(v).toFixed(2);
+    $('#lab-metrics').innerHTML =
+      `<div class="met"><span class="k">SNDR</span><span class="v">${f1(m.sndr)}<small>dB</small></span></div>` +
+      `<div class="met"><span class="k">SFDR</span><span class="v">${f1(m.sfdr)}<small>dB</small></span></div>` +
+      `<div class="met"><span class="k">ENOB（折算到满量程）</span><span class="v ${cls}">${m.enob.toFixed(2)}<small>位</small></span></div>` +
+      `<div class="met"><span class="k">DNL 范围</span><span class="v sm">${f2(m.dmin)} ~ ${f2(m.dmax)}</span></div>` +
+      `<div class="met"><span class="k">INL 范围</span><span class="v sm">${f2(m.imin)} ~ ${f2(m.imax)}</span></div>` +
+      `<div class="met"><span class="k">失码</span><span class="v ${m.miss ? 'poor' : 'good'}">${m.miss}<small>个</small></span></div>`;
+    const pill = $('#lab-pill');
+    pill.className = 'pill ' + (cls === 'good' ? 'ok' : cls === 'mid' ? 'warn' : 'bad');
+    pill.textContent = cls === 'good' ? '接近理想 10 位' : cls === 'mid' ? '轻微劣化' : '明显劣化';
+  }
+  let pending = false;
+  function run() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; compute(); drawLab(); }); }
+  for (const k in ids) $(ids[k]).addEventListener('input', e => { L[k] = +e.target.value; syncUI(); run(); });
+  seg($('#lab-type'), v => { L.type = v; run(); });
+  seg($('#lab-scope'), v => { L.scope = v; run(); });
+  $('#lab-cal').addEventListener('change', e => { L.cal = e.target.checked; run(); });
+  $('#lab-reseed').addEventListener('click', () => { L.seed = (L.seed * 31 + 17) % 100003; run(); });
+  $('#lab-presets').addEventListener('click', e => {
+    const b = e.target.closest('button[data-p]'); if (!b) return;
+    Object.assign(L, PRESETS[b.dataset.p]); syncUI(); run();
+  });
+  syncUI(); compute();
+  onRedraw(drawLab);
+})();
+
+/* =========== Ch8 scaling =========== */
+(() => {
+  const sl = $('#s8'), M = 8;
+  function draw() {
+    const s = +sl.value; $('#s8-o').textContent = s.toFixed(2);
+    const Ck = [], Nk = []; let tc = 0, tn = 0, tn0 = 0;
+    for (let k = 0; k < M; k++) { Ck[k] = Math.pow(s, k); Nk[k] = 1 / (Ck[k] * Math.pow(4, k)); tc += Ck[k]; tn += Nk[k]; tn0 += Math.pow(.25, k); }
+    const rc = tc / M, rn = tn / tn0;
+    $('#s8-kv').innerHTML = `<span>总电容（≈ 功耗）<b>${(rc * 100).toFixed(0)}%</b></span><span>总输入等效噪声功率 <b>×${rn.toFixed(2)}</b>（${(10 * Math.log10(rn)).toFixed(1)} dB）</span><span style="color:var(--muted)">均相对于不缩放（s = 1）</span>`;
+    const cv = $('#scale'), narrow = cv.clientWidth < 560, { ctx, w, h } = prep(cv, narrow ? 440 : 240);
+    const gapX = 28, ch = narrow ? (h - 20) / 2 : h;
+    const pw = narrow ? w - 40 - 8 : (w - 40 * 2 - gapX - 8) / 2;
+    const chart = (x0, y0, title, vals, color) => {
+      const box = { x: x0, y: y0 + 22, w: pw, h: ch - 22 - 30 };
+      const { Y } = axes(ctx, { ...box, xmin: 0, xmax: 1, ymin: 0, ymax: 1, yt: [0, .5, 1], yf: t => t.toFixed(1), yl: title });
+      const bw = box.w / M;
+      ctx.font = '11px ' + MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      vals.forEach((v, k) => {
+        ctx.fillStyle = color; const x = box.x + k * bw + bw * .18, ww = bw * .64;
+        ctx.fillRect(x, Y(Math.min(1, v)), ww, Y(0) - Y(Math.min(1, v)));
+        ctx.fillStyle = C.muted; ctx.fillText(k + 1, x + ww / 2, box.y + box.h + 5);
+      });
+    };
+    chart(40, 0, '各级采样电容 C_k / C_1（横轴：级序号）', Ck, C.accent);
+    if (narrow) chart(40, ch + 20, '各级噪声折算到输入（相对第 1 级）', Nk, C.ch3);
+    else chart(40 + pw + gapX + 40, 0, '各级噪声折算到输入（相对第 1 级）', Nk, C.ch3);
+  }
+  sl.addEventListener('input', draw);
+  onRedraw(draw);
+})();
+
+/* ---------- TOC highlight ---------- */
+(() => {
+  const links = $$('.toc a'), map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(es => {
+    for (const e of es) if (e.isIntersecting) { links.forEach(a => a.removeAttribute('aria-current')); const a = map.get(e.target.id); if (a) a.setAttribute('aria-current', 'true'); }
+  }, { rootMargin: '-35% 0px -60% 0px' });
+  $$('section.chap').forEach(s => io.observe(s));
+})();
+
+/* ---------- boot & theme / resize ---------- */
+redrawAll();
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawAll); } catch (_) {}
+new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+let rz = null; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(redrawAll, 120); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+})();
+</script>
+
+</body>
+</html>
