@@ -252,6 +252,48 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
 .quiz .inner{color:var(--ink)}
 .refs{font-size:14px;color:var(--muted);padding-left:1.3em;display:grid;gap:4px;max-width:80ch}
 .foot{margin-top:40px;font-size:13px;color:var(--muted)}
+/* part 2/3 */
+.toc li.grp{display:none}
+@media (min-width:1080px){
+  .toc li.grp{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:var(--muted);padding:16px 10px 4px}
+  .toc li.grp:first-child{padding-top:0}
+}
+.part-h{display:flex;flex-direction:column;gap:4px;padding:40px 0 4px;border-top:3px double var(--line);font-family:var(--f-display);font-weight:900;font-size:clamp(24px,3.2vw,32px);line-height:1.3}
+.part-h span{font-family:var(--f-mono);font-weight:400;font-size:12px;letter-spacing:.14em;color:var(--muted)}
+.part-h small{font-family:var(--f-body);font-weight:400;font-size:15px;color:var(--muted);max-width:66ch;line-height:1.7}
+main > .part-h:first-child{border-top:0;padding-top:0}
+.part-h + .chap{border-top:0;padding-top:20px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 28px}
+@media (max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.kv.sm{font-size:13px;gap:6px 22px;color:var(--muted)}
+.kv.sm b{font-size:14px;color:var(--ink)}
+.sa{display:block;width:100%;min-width:420px;height:auto}
+.sa .dev{stroke:var(--ink);stroke-width:3;fill:none}
+.sa .pl{stroke:var(--ink);stroke-width:1.6;fill:none}
+.sa .w{stroke:var(--muted);stroke-width:1.5;fill:none}
+.sa .bub{fill:var(--panel);stroke:var(--ink);stroke-width:1.4}
+.sa .rail{stroke:var(--ink);stroke-width:2.2}
+.sa .dl{font:11px var(--f-mono);fill:var(--muted)}
+.sa .nl{font:600 12px var(--f-mono);fill:var(--ink)}
+.sa[data-ph="reset"] .g-rst .dev,.sa[data-ph="reset"] .g-rst .pl,.sa[data-ph="reset"] .g-rst .w{stroke:var(--ch2)}
+.sa[data-ph="int"] .g-in .dev,.sa[data-ph="int"] .g-in .pl,.sa[data-ph="int"] .g-in .w{stroke:var(--ch1)}
+.sa[data-ph="regen"] .g-lat .dev,.sa[data-ph="regen"] .g-lat .pl,.sa[data-ph="regen"] .g-lat .w{stroke:var(--ch3)}
+.sa[data-ph="reset"] .g-rst .w,.sa[data-ph="int"] .g-in .w,.sa[data-ph="regen"] .g-lat .w{stroke-width:2.6}
+.sa[data-ph="reset"] .g-rst .bub{stroke:var(--ch2)}
+.sa[data-ph="regen"] .g-lat .bub{stroke:var(--ch3)}
+.sa-card.on[data-ph="reset"]{border-color:var(--ch2)}
+.sa-card.on[data-ph="int"]{border-color:var(--ch1)}
+.sa-card.on[data-ph="regen"]{border-color:var(--ch3)}
+.tl{list-style:none;margin:8px 0 0 6px;padding:0;display:grid;max-width:76ch;border-left:2px solid var(--line)}
+.tl li{display:grid;grid-template-columns:4.6em minmax(0,1fr);gap:12px;padding:7px 0 7px 16px;position:relative;font-size:15px;line-height:1.7}
+.tl li::before{content:"";position:absolute;left:-7px;top:15px;width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
+.tl .y{font-family:var(--f-mono);font-weight:600;color:var(--accent)}
+.fom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fom label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.fom input{font:inherit;font-family:var(--f-mono);font-size:15px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);width:100%;min-width:0}
+@media (max-width:600px){.fom{grid-template-columns:minmax(0,1fr)}}
+.map-desc{font-size:14px;min-height:3.6em;max-width:80ch}
+.map-desc b{margin-right:10px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 
@@ -259,7 +301,7 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
   <header class="hero">
     <div class="kicker">交互式讲义 · 模数转换器 · Pipelined ADC</div>
     <h1>流水线 ADC<small>逐级量化 · 残差放大 · 冗余与数字纠错</small></h1>
-    <p class="lede">这份讲义从“为什么要分级”讲起，依次经过 MDAC 电路、1.5 位冗余、错位相加、流水线时序，最后进入一个可以注入真实误差的 10 位 ADC 仿真器。每一章都配有可以拖动、切换、播放的实验台。全文约定 V<sub>ref</sub> = 1 V，差分输入满量程为 ±1 V；所有曲线都在浏览器中实时计算。</p>
+    <p class="lede">讲义分三部分。<strong>基本原理</strong>（第 1–8 章）从“为什么要分级”讲到 MDAC、1.5 位冗余、错位相加、时序和误差预算；<strong>关键模块</strong>（第 9–12 章）逐个拆开残差放大器、采样开关、比较器和数字校准；<strong>技术路线</strong>（第 13 章）梳理从运放流水线到流水线 SAR、时间交织的演进。每一章都配有可以拖动、切换、播放的实验台。全文约定 V<sub>ref</sub> = 1 V，差分输入满量程为 ±1 V；所有曲线都在浏览器中实时计算。</p>
     <figure class="chain dg" aria-label="流水线 ADC 结构框图">
       <svg viewBox="0 0 900 200" role="img">
         <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahp" d="M0 0 L10 5 L0 10 z"/></marker></defs>
@@ -292,6 +334,7 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
   <div class="layout">
     <nav class="toc" aria-label="章节">
       <ol>
+        <li class="grp">基本原理</li>
         <li><a href="#why"><span class="n">1</span>为什么是流水线</a></li>
         <li><a href="#idea"><span class="n">2</span>逐级细化</a></li>
         <li><a href="#mdac"><span class="n">3</span>MDAC：每级的心脏</a></li>
@@ -300,11 +343,20 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
         <li><a href="#timing"><span class="n">6</span>时序、吞吐与延迟</a></li>
         <li><a href="#lab"><span class="n">7</span>非理想因素实验台</a></li>
         <li><a href="#budget"><span class="n">8</span>误差预算与电容缩放</a></li>
-        <li><a href="#cheat"><span class="n">9</span>速查与思考题</a></li>
+        <li class="grp">关键模块</li>
+        <li><a href="#amp"><span class="n">9</span>残差放大器</a></li>
+        <li><a href="#switch"><span class="n">10</span>采样开关与前端</a></li>
+        <li><a href="#comp"><span class="n">11</span>比较器</a></li>
+        <li><a href="#cal"><span class="n">12</span>数字校准</a></li>
+        <li class="grp">技术路线</li>
+        <li><a href="#arch"><span class="n">13</span>架构演进与对比</a></li>
+        <li class="grp">附录</li>
+        <li><a href="#cheat"><span class="n">14</span>速查与思考题</a></li>
       </ol>
     </nav>
 
     <main>
+      <div class="part-h"><span>第一部分</span>基本原理</div>
       <!-- 1 -->
       <section class="chap" id="why">
         <div class="eyebrow">第 1 章</div>
@@ -691,9 +743,357 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
         </div>
       </section>
 
+      <div class="part-h"><span>第二部分</span>关键模块详解<small>流水线 ADC 的性能由四个模块决定：残差放大器决定速度和功耗，采样前端决定线性度和噪声的上限，比较器决定子 ADC 的速度和可靠性，数字校准决定能把模拟误差修正到什么程度。</small></div>
+
       <!-- 9 -->
+      <section class="chap" id="amp">
+        <div class="eyebrow">第 9 章 · 关键模块</div>
+        <h2>残差放大器：增益、带宽与建立</h2>
+        <div class="prose">
+          <p>MDAC 里的运放是流水线 ADC 最耗电、也最难设计的模块，常常占模拟功耗的一半以上。放大相只有不到半个时钟周期，运放要在这段时间里把输出推到 G·V<sub>in</sub> − D·V<sub>ref</sub>，而且误差折算到输入要小于 ½ LSB。能不能做到，取决于四个量：</p>
+          <ul>
+            <li><strong>反馈系数 β</strong> = C<sub>f</sub>/(C<sub>s</sub>+C<sub>f</sub>+C<sub>p</sub>)。对增益为 G 的 flip-around 级，β ≈ 1/(G + C<sub>p</sub>/C<sub>f</sub>)。每级位数越多，β 越小，同一个运放就越慢。</li>
+            <li><strong>直流增益 A</strong>：闭环增益被乘上 1/(1 + 1/(Aβ))，留下约 1/(Aβ) 的静态误差。</li>
+            <li><strong>增益带宽积 GBW</strong>：闭环时间常数 τ = 1/(2π·β·GBW)，线性建立到相对误差 ε 需要 ln(1/ε) 个 τ。</li>
+            <li><strong>压摆率 SR 和相位裕度</strong>：大信号时输出先以斜率 SR 直线上升（压摆），剩余误差足够小之后才进入指数建立；第二极点太近（相位裕度低）会产生振铃，反而拖长建立。</li>
+          </ul>
+          <div class="eq">g<sub>m</sub> ≈ 2π · GBW · C<sub>L,eff</sub>，&nbsp; C<sub>L,eff</sub> = C<sub>L</sub> + (1−β)·C<sub>f</sub> &nbsp;（C<sub>L</sub> 含下一级的采样电容）</div>
+          <p>速度、精度、功耗由此串成一条链：GBW 由跨导和负载电容决定，跨导又直接对应偏置电流。下面的仿真器用两极点运放模型（含压摆限制和有限直流增益）计算放大相的输出，输出阶跃取最坏情况 1 V。可用建立时间按 0.4/f<sub>s</sub> 计，即半个周期扣掉非交叠时间和子 ADC 判决时间。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 10 · 放大相建立（两极点运放 + 压摆 + 有限增益）</span><span class="pill ok" id="a9-pill">—</span></div>
+          <div class="bench-b">
+            <div class="row"><span class="lbl">级结构</span><div class="seg" id="a9-type" role="group" aria-label="级结构"><button data-v="1.5" aria-pressed="true">1.5 位（G=2）</button><button data-v="2.5" aria-pressed="false">2.5 位（G=4）</button><button data-v="3.5" aria-pressed="false">3.5 位（G=8）</button></div></div>
+            <div class="grid2">
+              <div class="ctl"><label for="a9-fs">采样率 f<sub>s</sub></label><input type="range" id="a9-fs" min="7" max="9.3" step="0.01" value="8.3"><output id="a9-fs-o"></output></div>
+              <div class="ctl"><label for="a9-gbw">运放 GBW</label><input type="range" id="a9-gbw" min="8" max="10.3" step="0.01" value="9.3"><output id="a9-gbw-o"></output></div>
+              <div class="ctl"><label for="a9-sr">压摆率 SR</label><input type="range" id="a9-sr" min="2" max="4.3" step="0.01" value="3.3"><output id="a9-sr-o"></output></div>
+              <div class="ctl"><label for="a9-pm">相位裕度</label><input type="range" id="a9-pm" min="40" max="85" step="1" value="70"><output id="a9-pm-o"></output></div>
+              <div class="ctl"><label for="a9-a">直流增益 A</label><input type="range" id="a9-a" min="40" max="100" step="1" value="80"><output id="a9-a-o"></output></div>
+              <div class="ctl"><label for="a9-cp">寄生 C<sub>p</sub>/C<sub>f</sub></label><input type="range" id="a9-cp" min="0" max="1" step="0.05" value="0.3"><output id="a9-cp-o"></output></div>
+              <div class="ctl"><label for="a9-n">目标分辨率</label><input type="range" id="a9-n" min="8" max="16" step="1" value="12"><output id="a9-n-o"></output></div>
+            </div>
+            <div class="kv sm" id="a9-kv"></div>
+            <div class="lab-plots">
+              <figure><figcaption>输出波形（黄色段为压摆，绿色虚线为目标值）</figcaption><canvas class="cv h260" id="a9-wave"></canvas></figure>
+              <figure><figcaption>建立误差（对数坐标）</figcaption><canvas class="cv h260" id="a9-err"></canvas></figure>
+            </div>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>可以试试：把级结构从 1.5 位切到 3.5 位，β 从约 0.43 降到约 0.12，同一个运放立刻不够快；把相位裕度降到 45°，振铃让误差曲线上下起伏；把目标提到 14 位，直流增益要求会超过 80 dB。</p>
+        </div>
+        <h3>运放结构怎么选</h3>
+        <div class="tblwrap">
+          <table class="tbl">
+            <thead><tr><th>结构</th><th>直流增益</th><th>输出摆幅</th><th>速度与功耗</th><th>典型用途</th></tr></thead>
+            <tbody>
+              <tr><td>套筒式共源共栅</td><td>中，约 (g<sub>m</sub>r<sub>o</sub>)<sup>2</sup></td><td>小</td><td>单级、非主极点远，最快最省电</td><td>摆幅要求不高的中速设计，常配合增益自举</td></tr>
+              <tr><td>折叠式共源共栅</td><td>中</td><td>中</td><td>比套筒式慢，电流多一路</td><td>输入共模范围要求宽</td></tr>
+              <tr><td>增益自举（gain-boosting）</td><td>高，可达 80–100 dB+</td><td>小到中</td><td>快，但辅助放大器带来零极点对，可能出现慢建立“尾巴”</td><td>12–14 位高精度第一级</td></tr>
+              <tr><td>两级米勒补偿</td><td>高</td><td>大，接近轨到轨</td><td>需要补偿，β 小时速度受限</td><td>低电源电压、大摆幅</td></tr>
+              <tr><td>环形放大器（ringamp）</td><td>高（多级反相器）</td><td>接近轨到轨</td><td>先快速“冲”向目标再自动稳定，能效高</td><td>先进工艺下的高能效设计（第 13 章）</td></tr>
+              <tr><td>开环 / 动态放大器</td><td>低且不精确</td><td>中</td><td>只在放大期间耗电，极省</td><td>配合数字校准，流水线 SAR 常用</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="prose" style="margin-top:16px">
+          <p>两个常见的系统级技巧：<strong>运放共享</strong>：相邻两级的放大相正好错开半个周期，可以分时共用一个运放，运放数量减半，代价是没有复位相带来的记忆效应和级间串扰；<strong>相关电平移位（CLS）</strong>：分两步放大，第二步只修正第一步的残余误差，用低增益运放也能得到很高的等效增益。</p>
+        </div>
+      </section>
+
+      <!-- 10 -->
+      <section class="chap" id="switch">
+        <div class="eyebrow">第 10 章 · 关键模块</div>
+        <h2>采样开关与前端：线性度、噪声与抖动</h2>
+        <div class="prose">
+          <p>采样前端是整个 ADC 的天花板：采样瞬间产生的误差原样进入输出，后面的冗余、增益和校准都帮不上忙。前端有三个主要限制：</p>
+          <ul>
+            <li><strong>开关非线性</strong>：MOS 开关导通电阻 R<sub>on</sub> ≈ 1/[μC<sub>ox</sub>(W/L)(V<sub>GS</sub> − V<sub>th</sub>)] 随输入电压变化，RC 跟踪误差因此与信号相关，表现为谐波失真。输入频率越高，跟踪误差越大。</li>
+            <li><strong>kT/C 噪声</strong>：开关电阻的热噪声被采样电容“冻结”，均方值为 kT/C，与电阻大小无关。想降低噪声只能加大电容，而电容越大，开关和运放也都要越大。</li>
+            <li><strong>时钟抖动</strong>：采样时刻的随机偏差 σ<sub>t</sub> 对高频输入相当于噪声，SNR = −20·log<sub>10</sub>(2π·f<sub>in</sub>·σ<sub>t</sub>)。</li>
+          </ul>
+          <p><strong>栅压自举开关</strong>是标准解法：保持相给电容 C<sub>B</sub> 充电到 V<sub>DD</sub>；跟踪相把 C<sub>B</sub> 接在开关管的栅极和输入端之间，使 V<sub>G</sub> ≈ V<sub>in</sub> + V<sub>DD</sub>，V<sub>GS</sub> 几乎恒定，R<sub>on</sub> 只剩体效应引起的小幅变化。</p>
+        </div>
+        <div class="chain dg" style="margin-top:6px">
+          <svg viewBox="0 0 720 200" role="img" aria-label="栅压自举开关的两个相位">
+            <text class="t-sm" x="10" y="22">保持相：M<tspan dy="4" class="sub">s</tspan><tspan dy="-4"> 关断，C</tspan><tspan dy="4" class="sub">B</tspan><tspan dy="-4"> 充电到 V</tspan><tspan dy="4" class="sub">DD</tspan></text>
+            <text class="t-sm" x="10" y="140" dy="-6">V<tspan dy="4" class="sub">in</tspan></text>
+            <path class="wire" d="M10 144 H150"/>
+            <rect class="blk" x="150" y="128" width="54" height="32" rx="3"/><text class="t-b" x="177" y="149" text-anchor="middle">M<tspan dy="3" class="sub">s</tspan></text>
+            <path class="wire" d="M204 144 H280 V156 M268 156 H292 M268 164 H292 M280 164 V180 M272 180 H288 M275 184 H285"/>
+            <text class="t-xs" x="296" y="164">C_H</text>
+            <path class="wire" d="M177 128 V104"/><text class="t-xs" x="184" y="108">V_G = 0</text>
+            <path class="wire" d="M90 44 V62 M78 62 H102 M78 70 H102 M90 70 V92 M82 92 H98 M85 96 H95"/>
+            <text class="t-xs" x="96" y="44">V_DD</text><text class="t-xs" x="108" y="70">C_B</text>
+            <line x1="360" y1="14" x2="360" y2="190" stroke="var(--line)" stroke-dasharray="4 4"/>
+            <text class="t-sm" x="376" y="22">跟踪相：C<tspan dy="4" class="sub">B</tspan><tspan dy="-4"> 跨在栅极和输入之间</tspan></text>
+            <text class="t-sm" x="376" y="134">V<tspan dy="4" class="sub">in</tspan></text>
+            <path class="wire" d="M376 144 H516"/>
+            <circle class="dot" cx="456" cy="144" r="3.5"/>
+            <rect class="blk st" x="516" y="128" width="54" height="32" rx="3"/><text class="t-b" x="543" y="149" text-anchor="middle">M<tspan dy="3" class="sub">s</tspan></text>
+            <path class="wire" d="M570 144 H646 V156 M634 156 H658 M634 164 H658 M646 164 V180 M638 180 H654 M641 184 H651"/>
+            <text class="t-xs" x="662" y="164">C_H</text>
+            <path class="wire" d="M456 144 V86 M444 86 H468 M444 78 H468 M456 78 V50 H543 V128"/>
+            <text class="t-xs" x="474" y="86">C_B（已充 V_DD）</text>
+            <text class="t-xs" x="550" y="100">V_G ≈ V_in + V_DD</text>
+          </svg>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 11 · 采样开关（f<sub>s</sub> = 1 GS/s，单端，输入摆幅 ±0.4·V<sub>DD</sub>）</span><span id="s10-finr"></span></div>
+          <div class="bench-b">
+            <div class="row"><span class="lbl">开关类型</span><div class="seg" id="s10-type" role="group" aria-label="开关类型"><button data-v="n" aria-pressed="false">NMOS</button><button data-v="tg" aria-pressed="false">CMOS 传输门</button><button data-v="boot" aria-pressed="true">栅压自举</button></div></div>
+            <div class="grid2">
+              <div class="ctl"><label for="s10-vdd">电源 V<sub>DD</sub></label><input type="range" id="s10-vdd" min="0.9" max="1.8" step="0.05" value="1.2"><output id="s10-vdd-o"></output></div>
+              <div class="ctl"><label for="s10-size">开关尺寸 W/L</label><input type="range" id="s10-size" min="-0.6" max="0.6" step="0.01" value="0"><output id="s10-size-o"></output></div>
+              <div class="ctl"><label for="s10-c">采样电容 C</label><input type="range" id="s10-c" min="-0.7" max="0.7" step="0.01" value="0"><output id="s10-c-o"></output></div>
+              <div class="ctl"><label for="s10-fin">输入频率 f<sub>in</sub></label><input type="range" id="s10-fin" min="7" max="8.69" step="0.01" value="8"><output id="s10-fin-o"></output></div>
+              <div class="ctl"><label for="s10-jit">时钟抖动 σ<sub>t</sub></label><input type="range" id="s10-jit" min="1" max="3" step="0.01" value="2.3"><output id="s10-jit-o"></output></div>
+            </div>
+            <div class="metrics" id="s10-met"></div>
+            <div class="lab-plots">
+              <figure><figcaption>导通电阻随输入电压变化（阴影为输入摆幅，粗线为当前开关）</figcaption><canvas class="cv h260" id="s10-ron"></canvas></figure>
+              <figure><figcaption>采样输出频谱（只含开关跟踪失真；单端，偶次谐波未抵消）</figcaption><canvas class="cv h260" id="s10-spec"></canvas></figure>
+            </div>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>先切到 NMOS：输入接近 V<sub>DD</sub> − V<sub>th</sub> 时开关几乎关断，失真非常严重。CMOS 传输门好一些，但中间电压处电阻仍有起伏。栅压自举开关的电阻几乎平直，SFDR 高出几十 dB。再把输入频率往上推，所有开关的失真都会恶化；加大采样电容可以压低 kT/C 噪声，但同样会让失真变差，这就是前端设计的核心取舍。</p>
+          <p>注意这是单端的一阶模型，没有计入全差分结构对偶次谐波的抵消，也没有采用衬底接源等进一步削弱体效应的做法，所以 SFDR 的绝对值偏保守，重点看三种开关之间的相对差别和随频率、电容的变化趋势。</p>
+        </div>
+        <h3>电荷注入与底板采样</h3>
+        <div class="prose">
+          <p>开关断开时，沟道电荷 Q<sub>ch</sub> = WLC<sub>ox</sub>(V<sub>GS</sub> − V<sub>th</sub>) 有一部分注入采样电容，加上时钟通过栅漏电容的馈通，造成约 Q<sub>ch</sub>/(2C) 的误差。V<sub>GS</sub> 随输入变化时，这个误差就是非线性的。</p>
+          <p><strong>底板采样</strong>的做法是让上极板一侧的开关（第 3 章电路中的 S5）比输入开关稍早断开。S5 断开时，它注入的电荷与输入无关，只表现为固定失调；此后上极板悬空，输入开关再断开时，上极板上的电荷无处可去，采到的值不再受输入开关电荷注入的影响。配合全差分结构，剩下的共模误差也被抵消。</p>
+        </div>
+        <h3>SHA-less 前端的采样时刻匹配</h3>
+        <div class="prose">
+          <p>去掉前端 S/H 后，第一级的子 ADC 和 MDAC 各自采样输入。两者采样时刻相差 Δt 时，子 ADC 看到的电压偏差最大为 2π·f<sub>in</sub>·A·Δt。只要它小于冗余余量（1.5 位级为 V<sub>ref</sub>/4），就会被数字纠错修正。按实验台当前的输入频率、满量程幅度 1 V，允许的 Δt 约为 <b class="m" id="s10-dt"></b>。多位首级的余量更小，时序匹配要求也就更严。</p>
+        </div>
+      </section>
+
+      <!-- 11 -->
+      <section class="chap" id="comp">
+        <div class="eyebrow">第 11 章 · 关键模块</div>
+        <h2>比较器：StrongARM 锁存器</h2>
+        <div class="prose">
+          <p>流水线子 ADC 的比较器几乎都用<strong>动态锁存比较器</strong>，其中最常见的是 StrongARM 结构。它没有静态电流，每次比较只消耗一次电荷；也不需要前置放大器，因为冗余已经把精度要求放宽到几十毫伏。一次比较分三个阶段，点击切换，电路中对应的器件会高亮：</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 12 · StrongARM 锁存比较器</span><span class="seg" id="sa-ph" role="group" aria-label="工作阶段"><button data-v="reset" aria-pressed="false">复位</button><button data-v="int" aria-pressed="true">积分</button><button data-v="regen" aria-pressed="false">再生</button></span></div>
+          <div class="bench-b">
+            <div class="split">
+              <div class="sch-wrap"><svg class="sa dg" id="sa" data-ph="int" viewBox="0 0 560 400" role="img" aria-label="StrongARM 锁存比较器电路"></svg></div>
+              <div class="phase-cards">
+                <div class="pc sa-card" data-ph="reset"><div class="pc-h"><i style="background:var(--ch2)"></i>复位（CLK 低）</div><p>尾管 M7 关断，没有电流。S1、S2 把两个输出预充到 V<sub>DD</sub>（实际电路通常还会预充 P、Q 两个内部节点）。</p></div>
+                <div class="pc sa-card on" data-ph="int"><div class="pc-h"><i style="background:var(--ch1)"></i>积分（CLK 升高）</div><p>M7 导通，输入对 M1、M2 按 ΔV<sub>in</sub> 分配电流。P、Q 和两个输出以略有差别的速率放电，差分电压约为 (g<sub>m</sub>ΔV<sub>in</sub>/C)·t，线性增长。</p></div>
+                <div class="pc sa-card" data-ph="regen"><div class="pc-h"><i style="background:var(--ch3)"></i>再生</div><p>输出降到约 V<sub>DD</sub> − |V<sub>thp</sub>| 后，M3–M6 组成的交叉耦合反相器开始工作，正反馈让差分电压按 e<sup>t/τ</sup> 指数放大，直到一端到地、另一端回到 V<sub>DD</sub>。</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>再生阶段的时间常数 τ ≈ C<sub>out</sub>/g<sub>m</sub>（交叉耦合管）。输入越小，再生的起点越低，判决越慢：</p>
+          <div class="eq">t<sub>dec</sub> ≈ t<sub>int</sub> + τ · ln[ (V<sub>DD</sub>/2) / (A<sub>int</sub>·ΔV<sub>in</sub>) ]</div>
+          <p>如果输入小到在可用时间内仍未判决，输出就停在中间电平，称为<strong>亚稳态</strong>。下面的实验台取 A<sub>int</sub> = 5、t<sub>int</sub> = 20 ps、V<sub>DD</sub> = 1 V。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 13 · 再生时间与亚稳态</span><span class="pill ok" id="c11-pill">—</span></div>
+          <div class="bench-b">
+            <div class="grid2">
+              <div class="ctl"><label for="c11-dv">输入差 ΔV<sub>in</sub></label><input type="range" id="c11-dv" min="-6" max="-1" step="0.05" value="-4"><output id="c11-dv-o"></output></div>
+              <div class="ctl"><label for="c11-tau">再生时间常数 τ</label><input type="range" id="c11-tau" min="5" max="60" step="1" value="20"><output id="c11-tau-o"></output></div>
+              <div class="ctl"><label for="c11-tav">可用判决时间</label><input type="range" id="c11-tav" min="50" max="1000" step="10" value="300"><output id="c11-tav-o"></output></div>
+            </div>
+            <div class="kv sm" id="c11-kv"></div>
+            <figure><figcaption>差分输出随时间增长（灰线：ΔV<sub>in</sub> 从 1 µV 到 100 mV，相邻两条相差 10 倍；蓝线为当前输入；红色区域为超时）</figcaption><canvas class="cv h280" id="c11-plot"></canvas></figure>
+          </div>
+        </div>
+        <h3>失调与冗余：多位首级为什么更难</h3>
+        <div class="prose">
+          <p>比较器失调主要来自输入对的失配，按 Pelgrom 模型 σ(V<sub>os</sub>) ≈ A<sub>VT</sub>/√(WL)。冗余容许的失调随每级位数减半：1.5 位级为 ±V<sub>ref</sub>/4，4.5 位级只有 ±V<sub>ref</sub>/32，而比较器数量却翻倍增长。拖动输入管面积，看各种级结构的比较器“全部达标”的概率。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 14 · 比较器失调与冗余余量</span><span>A<sub>VT</sub> 取 3 mV·µm（示例值）</span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="ctl"><label for="c11-wl">输入管面积 W·L</label><input type="range" id="c11-wl" min="-2" max="1" step="0.02" value="-1.3"><output id="c11-wl-o"></output></div>
+              <span class="lbl">σ(V<sub>os</sub>) = <b class="m" id="c11-sig"></b></span>
+            </div>
+            <div class="tblwrap" style="margin-top:0"><table class="tbl"><thead><tr><th>级结构</th><th>比较器数</th><th>容许失调</th><th>相当于</th><th>单个比较器超差概率</th><th>整级全部达标</th></tr></thead><tbody id="c11-tbl"></tbody></table></div>
+          </div>
+        </div>
+        <div class="note"><span class="tag">另外要注意</span>这里只计算了输入对的随机失配，实际还要加上锁存器失配和动态失调。<strong>回踢噪声</strong>：再生时输出大幅跳变，经寄生电容耦合回输入，会干扰共用同一输入的其他比较器和采样网络，常用隔离管或预放大级抑制。<strong>比较器噪声</strong>（几百 µV 量级）在流水线子 ADC 里一般不是问题，但在流水线 SAR 中负责精细量化的比较器需要认真设计。</div>
+      </section>
+
+      <!-- 12 -->
+      <section class="chap" id="cal">
+        <div class="eyebrow">第 12 章 · 关键模块</div>
+        <h2>数字校准：用算法修正模拟误差</h2>
+        <div class="prose">
+          <p>第 7 章看到，电容失配和运放有限增益让级间增益偏离理想值，冗余对此无能为力。12 位以上的 ADC 要求第一级增益精确到约 0.05% 甚至更好，只靠电容匹配和高增益运放很难做到，在先进工艺里更难。数字校准换个思路：测出每一级的<strong>实际</strong>增益（以及 DAC 电平），然后在数字域用实际值重建输出。</p>
+          <p>校准分两类。<strong>前台校准</strong>在上电或空闲时输入已知信号测量，简单准确，但无法跟踪工作中的温度和电压变化。<strong>后台校准</strong>在正常转换的同时估计误差，能持续跟踪，代价是收敛慢，并且要占用一部分动态范围或额外硬件。常见的后台方法有：</p>
+          <ul>
+            <li><strong>伪随机（PN）抖动相关法</strong>：在第一级 DAC 注入与输入无关的 ±Δ 序列，再从后级输出中把它“相关”出来，得到实际增益（Siragusa 与 Galton，2004）。</li>
+            <li><strong>Split-ADC</strong>：把 ADC 分成两个相同的一半，同时转换同一输入，两者之差只含误差信息，可以快速确定地收敛（McNeill 等，2005）。</li>
+            <li><strong>参考 ADC 均衡</strong>：用一个慢速但精确的 ADC 作为参考，通过 LMS 自适应滤波让主 ADC 的输出逼近参考。</li>
+            <li><strong>统计与非线性校准</strong>：估计开环残差放大器的增益和非线性项（Murmann 与 Boser，2003）。</li>
+          </ul>
+          <p>以 PN 抖动法为例。注入 q·Δ（q = ±1）之后，第一级残差为 G′·(V<sub>in</sub> − D·V<sub>ref</sub>/2 + q·Δ)，其中 G′ 是未知的实际增益。把后级输出 D<sub>back</sub> 乘以 q 再求平均，输入信号部分与 q 不相关，平均为零，只剩下 G′·Δ：</p>
+          <div class="eq">â ← â + μ·(q·D<sub>back</sub> − â)，&nbsp; Ĝ = â/Δ，&nbsp; D<sub>out</sub> = D<sub>1</sub>·V<sub>ref</sub>/2 + D<sub>back</sub>/Ĝ − q·Δ</div>
+          <p>步长 μ 决定收敛速度和精度的取舍：μ 大，收敛快，但输入信号残留的随机波动也大；μ 小，估计准，但需要几百万个样本。下面是一个 12 位 ADC（第一级 1.5 位 + 理想的 11 位后级）的实时仿真，输入为 0.85 V<sub>ref</sub> 的正弦。抖动会占用一部分冗余余量，所以输入幅度不能到满量程。</p>
+        </div>
+        <div class="bench" id="c12-bench">
+          <div class="bench-h"><span>实验台 15 · PN 抖动后台增益校准（12 位）</span><span class="row"><button class="btn" id="c12-run">开始</button><button class="btn" id="c12-reset">重新开始</button></span></div>
+          <div class="bench-b">
+            <div class="controls">
+              <div class="ctl"><label for="c12-eps">第 1 级实际增益误差</label><input type="range" id="c12-eps" min="-3" max="3" step="0.1" value="-1.5"><output id="c12-eps-o"></output></div>
+              <div class="row"><span class="lbl">步长 μ</span><div class="seg" id="c12-mu" role="group" aria-label="步长"><button data-v="14" aria-pressed="false">2⁻¹⁴</button><button data-v="18" aria-pressed="false">2⁻¹⁸</button><button data-v="22" aria-pressed="true">2⁻²²</button><button data-v="avg" aria-pressed="false">1/n</button></div></div>
+              <div class="row"><span class="lbl">抖动幅度 Δ</span><div class="seg" id="c12-d" role="group" aria-label="抖动幅度"><button data-v="16" aria-pressed="false">V<sub>ref</sub>/16</button><button data-v="8" aria-pressed="true">V<sub>ref</sub>/8</button></div></div>
+            </div>
+            <div class="kv sm" id="c12-kv"></div>
+            <canvas class="cv h340" id="c12-plot"></canvas>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>对比四种步长（仿真最多运行 1 亿个样本）：2⁻¹⁴ 几万个样本就收敛，但估计误差停在约 1% 来回抖，ENOB 上不去；2⁻¹⁸ 的误差底约 0.3%；2⁻²² 要几百万个样本才收敛，一亿个样本后误差约 0.05%，ENOB 在 11.5 位上下；“1/n”相当于对全部历史求平均，精度随样本数持续提高，一亿个样本后可到约 0.01%，接近 12 位，但它也失去了跟踪参数漂移的能力。实际芯片常用变步长：先大后小。Δ 越大，相关信号越强，收敛越快，但占用的冗余余量也越多。每次运行的随机序列不同，具体数值会有起伏。</p>
+        </div>
+      </section>
+
+      <div class="part-h"><span>第三部分</span>技术路线与架构<small>工艺越先进，模拟电路越难做（电源电压低、晶体管本征增益低），数字电路却越来越便宜。流水线 ADC 几十年的演进，就是不断把精度负担从模拟搬到数字。</small></div>
+
+      <!-- 13 -->
+      <section class="chap" id="arch">
+        <div class="eyebrow">第 13 章 · 技术路线</div>
+        <h2>从运放流水线到流水线 SAR 与时间交织</h2>
+        <h3>演进时间线</h3>
+        <ul class="tl">
+          <li><span class="y">1980</span><span>Black 与 Hodges 提出时间交织 ADC 阵列，用多个慢速 ADC 轮流采样换取速度。</span></li>
+          <li><span class="y">1987</span><span>Lewis 与 Gray 发表第一颗 CMOS 流水线 ADC（9 位、5 MS/s），奠定开关电容 MDAC 结构。</span></li>
+          <li><span class="y">1992</span><span>Lewis 等提出 1.5 位/级与数字纠错，比较器失调不再是精度瓶颈。</span></li>
+          <li><span class="y">1996</span><span>Cline 与 Gray 系统研究级间电容缩放，给出功耗优化方法。</span></li>
+          <li><span class="y">2000s</span><span>多位首级、SHA-less 前端、运放共享、增益自举运放成为常用设计手段。</span></li>
+          <li><span class="y">2003</span><span>Murmann 与 Boser 用开环残差放大器加数字校准，开启“模拟做粗、数字修正”的路线。</span></li>
+          <li><span class="y">2004</span><span>Siragusa 与 Galton 用 PN 抖动做后台校准，实现 15 位流水线 ADC。</span></li>
+          <li><span class="y">2006</span><span>Fiorenza 等提出基于比较器的开关电容电路（CBSC），用过零检测取代运放。</span></li>
+          <li><span class="y">2011</span><span>Lee 与 Flynn 发表 SAR 辅助两级流水线 ADC，SAR 与流水线开始融合。</span></li>
+          <li><span class="y">2012</span><span>Hershberg 等提出环形放大器（ringamp），适合低电压先进工艺。</span></li>
+          <li><span class="y">2010s–</span><span>流水线 SAR、动态放大器和后台校准结合，再配合时间交织，成为 GS/s 级射频直采 ADC 的主流方案之一。</span></li>
+        </ul>
+
+        <h3>SAR 辅助流水线（流水线 SAR）</h3>
+        <div class="prose">
+          <p>第一级不再是 1.5 位级，而是一个多位的 SAR ADC。它的电容 DAC 同时充当采样电容；逐次逼近结束时，DAC 上极板上留下的电压正好就是残差 V<sub>in</sub> − V<sub>DAC</sub>，不需要单独的 MDAC 做减法。残差放大后交给第二级 SAR 继续量化。</p>
+          <ul>
+            <li><strong>好处</strong>：首级分辨率高（常见 4 到 8 位），残差增益大，后级的噪声和失配被大幅压低，后级可以做得很小；整个 ADC 只有一个残差放大器，它的精度可以靠校准放宽，因此常用开环或动态放大器；比较器和逻辑都是动态电路，功耗随采样率缩放，能效接近 SAR。</li>
+            <li><strong>挑战</strong>：首级 SAR 要比较多次，单通道速率受限；残差放大器的增益、非线性和温漂需要后台校准；首级 SAR 内部通常也要加冗余，来容忍 DAC 建立不完全和比较器误判。</li>
+          </ul>
+        </div>
+        <div class="chain dg" style="margin-top:6px">
+          <svg viewBox="0 0 720 200" role="img" aria-label="SAR 辅助流水线 ADC 框图">
+            <text class="t-sm" x="6" y="64">V<tspan dy="4" class="sub">in</tspan></text>
+            <path class="wire" d="M6 74 H70" marker-end="url(#ah)"/>
+            <rect class="blk st" x="72" y="40" width="170" height="68" rx="4"/>
+            <text class="t-b" x="157" y="66" text-anchor="middle">第一级 SAR</text>
+            <text class="t-xs" x="157" y="85" text-anchor="middle">CDAC 兼作采样电容</text>
+            <text class="t-xs" x="157" y="100" text-anchor="middle">量化 n₁ 位</text>
+            <path class="wire" d="M242 74 H300" marker-end="url(#ah)"/>
+            <text class="t-xs" x="271" y="64" text-anchor="middle">残差</text>
+            <rect class="blk" x="302" y="40" width="120" height="68" rx="4"/>
+            <text class="t-b" x="362" y="66" text-anchor="middle">残差放大器</text>
+            <text class="t-xs" x="362" y="85" text-anchor="middle">× G（常为开环/动态）</text>
+            <path class="wire" d="M422 74 H480" marker-end="url(#ah)"/>
+            <rect class="blk st" x="482" y="40" width="150" height="68" rx="4"/>
+            <text class="t-b" x="557" y="66" text-anchor="middle">第二级 SAR</text>
+            <text class="t-xs" x="557" y="85" text-anchor="middle">量化 n₂ 位</text>
+            <path class="wire" d="M157 108 V140" marker-end="url(#ah)"/>
+            <path class="wire" d="M557 108 V140" marker-end="url(#ah)"/>
+            <rect class="blk" x="72" y="142" width="560" height="40" rx="4"/>
+            <text class="t-b" x="352" y="167" text-anchor="middle">数字合成：对齐 + 冗余纠错 + 增益/非线性校准</text>
+            <path class="wire" d="M632 162 H690" marker-end="url(#ah)"/>
+            <text class="t-sm" x="660" y="154">D<tspan dy="4" class="sub">out</tspan></text>
+          </svg>
+        </div>
+
+        <h3>运放的替代者</h3>
+        <div class="prose">
+          <ul>
+            <li><strong>过零检测型开关电容（CBSC / ZCBC）</strong>：用比较器检测虚地节点何时过零，到时就关断充电电流源。它不需要稳定的负反馈运放，也就没有相位裕度问题（Fiorenza 等，2006）。</li>
+            <li><strong>环形放大器</strong>：三级反相器链，中间级偏置在“死区”。大信号时它像压摆一样快速冲向目标，接近目标后自动进入低带宽的稳定状态。输出摆幅接近轨到轨，非常适合低电压工艺（Hershberg 等，2012）。</li>
+            <li><strong>动态放大器、浮动反相器放大器</strong>：只在放大期间消耗电荷，增益不精确但可以校准，是流水线 SAR 中最常见的残差放大器。</li>
+          </ul>
+        </div>
+
+        <h3>时间交织：用通道数换速度</h3>
+        <div class="prose">
+          <p>M 个相同的子 ADC 轮流采样，每个只需工作在 f<sub>s</sub>/M。理想情况下合起来就是一个速率为 f<sub>s</sub> 的 ADC，但通道之间的差异会周期性地调制信号，产生杂散：</p>
+          <ul>
+            <li><strong>失调失配</strong>：杂散在 k·f<sub>s</sub>/M，与输入无关。</li>
+            <li><strong>增益失配</strong>：杂散在 k·f<sub>s</sub>/M ± f<sub>in</sub>，大小与输入频率无关。</li>
+            <li><strong>时序失配（skew）</strong>：杂散位置与增益失配相同，但幅度随 f<sub>in</sub> 增大。这是高速时间交织 ADC 最难解决的问题，通常要做到亚皮秒级的匹配或校准。</li>
+            <li><strong>带宽失配</strong>：同时带来增益和相位误差，同样随频率恶化。</li>
+          </ul>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 16 · 时间交织失配（总速率 4 GS/s，12 位子 ADC）</span><button class="btn" id="t13-reseed">重新抽取失配</button></div>
+          <div class="bench-b">
+            <div class="row"><span class="lbl">通道数 M</span><div class="seg" id="t13-M" role="group" aria-label="通道数"><button data-v="1" aria-pressed="false">1</button><button data-v="2" aria-pressed="false">2</button><button data-v="4" aria-pressed="true">4</button><button data-v="8" aria-pressed="false">8</button></div></div>
+            <div class="grid2">
+              <div class="ctl"><label for="t13-off">失调失配 σ</label><input type="range" id="t13-off" min="0" max="10" step="0.1" value="2"><output id="t13-off-o"></output></div>
+              <div class="ctl"><label for="t13-gain">增益失配 σ</label><input type="range" id="t13-gain" min="0" max="1" step="0.01" value="0.2"><output id="t13-gain-o"></output></div>
+              <div class="ctl"><label for="t13-skew">时序失配 σ</label><input type="range" id="t13-skew" min="0" max="5" step="0.05" value="1"><output id="t13-skew-o"></output></div>
+              <div class="ctl"><label for="t13-fin">输入频率 f<sub>in</sub></label><input type="range" id="t13-fin" min="7" max="9.3" step="0.01" value="8.99"><output id="t13-fin-o"></output></div>
+            </div>
+            <div class="metrics" id="t13-met"></div>
+            <figure><figcaption>输出频谱（黄色标注为失调杂散，品红为增益/时序杂散）</figcaption><canvas class="cv h280" id="t13-spec"></canvas></figure>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>把增益和失调失配调到 0、只留 1 ps 时序失配，再把输入频率从 10 MHz 推到 2 GHz，杂散会随频率每十倍升高约 20 dB。这就是为什么 GS/s 级时间交织 ADC 一定要做时序校准，或者在前面加一个全局的快速采样保持电路。</p>
+        </div>
+
+        <h3>架构地图与品质因数</h3>
+        <div class="prose">
+          <p>不同架构各有“舒适区”。下图是粗略的示意，边界并不精确；想看真实数据，可以查 Murmann 维护的 ADC Performance Survey，它收录了历年 ISSCC 和 VLSI 发表的 ADC。比较不同设计时常用两种品质因数：</p>
+          <div class="eq">Walden FoM = P / (2<sup>ENOB</sup> · f<sub>s</sub>) &nbsp;（J/conv-step，越小越好）<br>Schreier FoM = SNDR + 10·log<sub>10</sub>(BW / P) &nbsp;（dB，BW = f<sub>s</sub>/2，越大越好）</div>
+          <p>Walden FoM 假设分辨率每多 1 位功耗翻倍，适合比较中低精度设计；Schreier FoM 假设多 1 位功耗变成 4 倍（热噪声受限），更适合比较高精度设计。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 17 · ADC 架构地图（示意，悬停或点击区域查看说明）</span></div>
+          <div class="bench-b"><canvas class="cv h340" id="map"></canvas><div class="map-desc" id="map-desc"></div></div>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 18 · 品质因数计算器</span><span>默认值为示例，不对应具体芯片</span></div>
+          <div class="bench-b">
+            <div class="fom">
+              <label for="fom-p">功耗 P（mW）<input type="number" id="fom-p" value="10" min="0" step="any"></label>
+              <label for="fom-fs">采样率 f<sub>s</sub>（MS/s）<input type="number" id="fom-fs" value="500" min="0" step="any"></label>
+              <label for="fom-sndr">SNDR（dB）<input type="number" id="fom-sndr" value="66" step="any"></label>
+            </div>
+            <div class="kv" id="fom-out"></div>
+          </div>
+        </div>
+
+        <h3>主流路线对比</h3>
+        <div class="tblwrap">
+          <table class="tbl">
+            <thead><tr><th>路线</th><th>核心思路</th><th>优点</th><th>主要挑战</th><th>典型场景</th></tr></thead>
+            <tbody>
+              <tr><td>运放型流水线（1.5–4.5 位/级）</td><td>闭环 MDAC 精确放大残差</td><td>线性好、成熟，容易做到 12–14 位</td><td>运放功耗大；先进工艺下增益和摆幅不足</td><td>中高速、中高精度；成熟工艺</td></tr>
+              <tr><td>流水线 SAR / SAR 辅助流水线</td><td>首级 SAR 量化多位，放大残差后交给第二级 SAR</td><td>比较器少，残差放大器要求低，能效高</td><td>残差放大器增益和线性需要校准；单通道速率受首级 SAR 限制</td><td>12–14 位，约 100 MS/s 到 1 GS/s 级</td></tr>
+              <tr><td>环形放大器 / 过零检测流水线</td><td>用非传统放大器替代运放</td><td>适合低电压工艺，摆幅大，能效高</td><td>偏置和稳定性设计复杂，对 PVT 敏感</td><td>先进工艺下的高能效设计</td></tr>
+              <tr><td>开环或动态放大 + 数字校准</td><td>放大器不追求精确，靠算法修正</td><td>极省电、快</td><td>校准算法复杂，收敛时间长，需要跟踪温漂</td><td>与 SAR 结合的混合架构</td></tr>
+              <tr><td>时间交织（子 ADC 多为流水线 SAR）</td><td>多通道轮流采样</td><td>总速率可达 GS/s 到数十 GS/s</td><td>通道失调、增益、时序、带宽失配产生杂散，必须校准</td><td>射频直采、5G 基站、测试仪器、光通信</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="part-h"><span>附录</span>速查与自测</div>
+
+      <!-- 14 -->
       <section class="chap" id="cheat">
-        <div class="eyebrow">第 9 章</div>
+        <div class="eyebrow">第 14 章</div>
         <h2>公式速查与思考题</h2>
         <div class="cards">
           <div class="card"><h4>单级传输</h4><div class="f">V<sub>res</sub> = G·V<sub>in</sub> − D·V<sub>ref</sub></div></div>
@@ -708,6 +1108,14 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
           <div class="card"><h4>建立时间</h4><div class="f">T/2 ≥ (N+1)·ln2·τ<br>τ = 1/(2π·β·GBW)</div></div>
           <div class="card"><h4>热噪声</h4><div class="f">v<sub>n</sub><sup>2</sup> = kT/C</div></div>
           <div class="card"><h4>延迟</h4><div class="f">约 (M+2)/2 个时钟周期</div></div>
+          <div class="card"><h4>反馈系数</h4><div class="f">β = C<sub>f</sub>/(C<sub>s</sub>+C<sub>f</sub>+C<sub>p</sub>) ≈ 1/(G + C<sub>p</sub>/C<sub>f</sub>)</div></div>
+          <div class="card"><h4>运放跨导</h4><div class="f">g<sub>m</sub> ≈ 2π·GBW·C<sub>L,eff</sub></div></div>
+          <div class="card"><h4>抖动限制</h4><div class="f">SNR = −20·log(2π·f<sub>in</sub>·σ<sub>t</sub>)</div></div>
+          <div class="card"><h4>比较器再生</h4><div class="f">t<sub>dec</sub> ≈ t<sub>int</sub> + τ·ln[V<sub>DD</sub>/(2A·ΔV)]</div></div>
+          <div class="card"><h4>Pelgrom 失配</h4><div class="f">σ(V<sub>os</sub>) ≈ A<sub>VT</sub>/√(WL)</div></div>
+          <div class="card"><h4>时间交织杂散</h4><div class="f">失调：k·f<sub>s</sub>/M<br>增益、时序：k·f<sub>s</sub>/M ± f<sub>in</sub></div></div>
+          <div class="card"><h4>Walden FoM</h4><div class="f">P / (2<sup>ENOB</sup>·f<sub>s</sub>)</div></div>
+          <div class="card"><h4>Schreier FoM</h4><div class="f">SNDR + 10·log(BW/P)</div></div>
         </div>
         <h3>思考题</h3>
         <div class="quiz">
@@ -716,6 +1124,10 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
           <details><summary>3. 为什么数字纠错修不了电容失配，而数字校准可以？</summary><div class="inner">数字纠错按理想权重（2<sup>−k</sup>）组合各级码字，它只保证“判决错误”能被后级补回。电容失配改变了模拟残差本身的增益和跳变高度，按理想权重重建必然出错。数字校准则先测出实际增益，用实际权重重建；只要残差没有越界（冗余保证了这一点），信息就没有丢失，误差就能被消掉。</div></details>
           <details><summary>4. 10 位 ADC，1.5 位级。第 3 级运放输出有 1 mV 的误差，折算到输入是多少？约等于几个 LSB？</summary><div class="inner">前面两级增益之积为 4，所以折算到输入为 0.25 mV。LSB = 2 V / 1024 ≈ 1.95 mV，约 0.13 LSB。</div></details>
           <details><summary>5. 为什么相邻两级要用相反的时钟相位？</summary><div class="inner">第 k 级在放大相输出残差，第 k+1 级必须恰好在这一相采样它。若两级同相，下一级要多等半个周期，各级无法同时工作，吞吐率减半。</div></details>
+          <details><summary>6. 首级从 1.5 位改成 3.5 位（C<sub>p</sub> 忽略），反馈系数和运放 GBW 要求怎么变？</summary><div class="inner">β 从约 1/2 降到约 1/8。在同样的建立时间和精度下，τ = 1/(2πβ·GBW) 要保持不变，GBW 大约要提高到 4 倍；负载电容通常也更大，功耗增加更多。换来的好处是后级误差被 8 倍增益压低，比较器失调余量却只剩 ±V<sub>ref</sub>/16。</div></details>
+          <details><summary>7. 输入 1 GHz、要求 SNR 70 dB，时钟抖动最多允许多少？</summary><div class="inner">σ<sub>t</sub> ≤ 10<sup>−70/20</sup> / (2π × 10<sup>9</sup>) ≈ 3.16×10<sup>−4</sup> / 6.28×10<sup>9</sup> ≈ 50 fs（rms）。</div></details>
+          <details><summary>8. 4 通道时间交织，f<sub>s</sub> = 4 GS/s，f<sub>in</sub> = 900 MHz。增益失配杂散落在哪些频率？失调杂散呢？</summary><div class="inner">增益和时序失配杂散在 k·1 GHz ± 900 MHz，折叠到 0–2 GHz 后为 100 MHz、1100 MHz 和 1900 MHz。失调杂散在 1 GHz 和 2 GHz（以及直流）。</div></details>
+          <details><summary>9. 为什么 PN 抖动后台校准需要几百万个样本才能达到 12 位精度？</summary><div class="inner">输入信号在相关运算里是“噪声”，它的功率远大于抖动信号。估计值的标准差约随 √(μ) 或 1/√n 下降，要把增益误差压到约 2<sup>−12</sup>，就需要上百万量级的平均。加大 Δ 能加快收敛，但会占用冗余余量和信号范围。</div></details>
         </div>
         <h3>延伸阅读</h3>
         <ul class="refs">
@@ -724,8 +1136,16 @@ figcaption{font-size:13px;color:var(--muted);margin-bottom:6px}
           <li>D. W. Cline, P. R. Gray, “A power optimized 13-b 5 Msamples/s pipelined ADC in 1.2 µm CMOS,” IEEE JSSC, 1996（电容缩放）。</li>
           <li>B. Murmann, B. E. Boser, “A 12-bit 75-MS/s pipelined ADC using open-loop residue amplification,” IEEE JSSC, 2003（数字校准）。</li>
           <li>B. Razavi, <em>Principles of Data Conversion System Design</em>, IEEE Press, 1995。</li>
+          <li>W. C. Black, D. A. Hodges, “Time interleaved converter arrays,” IEEE JSSC, 1980。</li>
+          <li>E. Siragusa, I. Galton, “A digitally enhanced 1.8-V 15-bit 40-MSample/s CMOS pipelined ADC,” IEEE JSSC, 2004（PN 抖动后台校准）。</li>
+          <li>J. McNeill, M. Coln, B. Larivee, “Split ADC architecture for deterministic digital background calibration of a 16-bit 1-MS/s ADC,” IEEE JSSC, 2005。</li>
+          <li>J. K. Fiorenza et al., “Comparator-based switched-capacitor circuits for scaled CMOS technologies,” IEEE JSSC, 2006。</li>
+          <li>C. C. Lee, M. P. Flynn, “A SAR-assisted two-stage pipeline ADC,” IEEE JSSC, 2011。</li>
+          <li>B. Hershberg et al., “Ring amplifiers for switched capacitor circuits,” IEEE JSSC, 2012。</li>
+          <li>B. Razavi, <em>Design of Analog CMOS Integrated Circuits</em>（运放、开关、噪声）；D. Johns, K. Martin, <em>Analog Integrated Circuit Design</em>（开关电容与比较器）。</li>
+          <li>B. Murmann, “ADC Performance Survey”（历年 ISSCC / VLSI 发表的 ADC 数据汇总，可在线检索）。</li>
         </ul>
-        <p class="foot">模型说明：所有级采用 flip-around MDAC 行为模型 V<sub>res</sub> = [(1+(G−1)(1+δ))·V<sub>in</sub> − (1+δ)·D·V<sub>ref</sub>] / (1 + G/A) + 噪声，运放输出摆幅限制在 ±1.5 V；末级为理想 2 位 Flash；未建模建立误差、时钟抖动与基准源噪声。</p>
+        <p class="foot">模型说明：所有级采用 flip-around MDAC 行为模型 V<sub>res</sub> = [(1+(G−1)(1+δ))·V<sub>in</sub> − (1+δ)·D·V<sub>ref</sub>] / (1 + G/A) + 噪声，运放输出摆幅限制在 ±1.5 V；末级为理想 2 位 Flash；未建模建立误差、时钟抖动与基准源噪声。第 9–13 章的模型均为教学用的简化模型：运放为两极点线性模型加压摆限制；开关失真按一阶 RC 跟踪误差计算；比较器再生按单一时间常数；校准仿真只估计第一级增益；参数取值为示例。</p>
       </section>
     </main>
   </div>
@@ -1427,6 +1847,506 @@ function fft(re, im) {
   }
   sl.addEventListener('input', draw);
   onRedraw(draw);
+})();
+
+/* ================= Part 2 / 3 helpers ================= */
+const SUPD = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+function sci(v, d = 1) {
+  if (!isFinite(v)) return '—';
+  if (v === 0) return '≈ 0';
+  const a = Math.abs(v);
+  if (a >= 1e-2 && a < 1e4) return String(parseFloat(v.toPrecision(3)));
+  const e = Math.floor(Math.log10(a)), m = v / Math.pow(10, e);
+  return m.toFixed(d) + '×10' + String(e).split('').map(c => SUPD[c]).join('');
+}
+function eng(v, unit, p = 3) {
+  if (!isFinite(v)) return '—';
+  if (v === 0) return '0 ' + unit;
+  const P = [[1e12, 'T'], [1e9, 'G'], [1e6, 'M'], [1e3, 'k'], [1, ''], [1e-3, 'm'], [1e-6, 'µ'], [1e-9, 'n'], [1e-12, 'p'], [1e-15, 'f'], [1e-18, 'a']];
+  const a = Math.abs(v);
+  for (const [s, pr] of P) if (a >= s * 0.99995) return parseFloat((v / s).toPrecision(p)) + ' ' + pr + unit;
+  return v.toExponential(2) + ' ' + unit;
+}
+function niceTicks(a, b, n = 5) {
+  const span = b - a; if (!(span > 0)) return [a];
+  const s0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(s0))), r = s0 / mag;
+  const st = (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10) * mag, out = [];
+  for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + st * 1e-6; v += st) out.push(parseFloat(v.toPrecision(10)));
+  return out;
+}
+function bindRange(id, fmt, set, log, after) {
+  const el = $('#' + id), o = $('#' + id + '-o');
+  const get = () => log ? Math.pow(10, +el.value) : +el.value;
+  const upd = () => { const v = get(); if (o) o.textContent = fmt(v); set(v); };
+  upd();
+  el.addEventListener('input', () => { upd(); after(); });
+}
+function erfc(x) {
+  const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+  const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+  return x >= 0 ? r : 2 - r;
+}
+function specStats(x, J) {
+  const N = x.length, re = Float64Array.from(x), im = new Float64Array(N);
+  fft(re, im);
+  const half = N / 2, P = new Float64Array(half + 1);
+  for (let k = 0; k <= half; k++) P[k] = re[k] * re[k] + im[k] * im[k];
+  let nd = 0, sp = 0;
+  for (let k = 1; k <= half; k++) if (k !== J) { nd += P[k]; if (P[k] > sp) sp = P[k]; }
+  return { P, sndr: 10 * Math.log10(P[J] / Math.max(nd, 1e-300)), sfdr: 10 * Math.log10(P[J] / Math.max(sp, 1e-300)) };
+}
+const foldBin = (k, NF) => { k = ((k % NF) + NF) % NF; return k > NF / 2 ? NF - k : k; };
+const oddBin = (f, fs, NF) => clamp(2 * Math.round((f / fs * NF - 1) / 2) + 1, 1, NF / 2 - 1);
+const metricsHTML = items => items.map(it => `<div class="met"><span class="k">${it.k}</span><span class="v ${it.c || ''}">${it.v}${it.u ? `<small>${it.u}</small>` : ''}</span></div>`).join('');
+const kvHTML = items => items.map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join('');
+const logLab = t => eng(Math.pow(10, t), 'V', 1);
+const supNum = n => String(n).split('').map(c => SUPD[c]).join('');
+function clipBox(ctx, b) { ctx.save(); ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip(); }
+function hline(ctx, box, y, col, lab, below) {
+  ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(box.x, y); ctx.lineTo(box.x + box.w, y); ctx.stroke(); ctx.setLineDash([]);
+  if (lab) { ctx.fillStyle = col; ctx.font = '11px ' + SANS; ctx.textAlign = 'right'; ctx.textBaseline = below ? 'top' : 'bottom'; ctx.fillText(lab, box.x + box.w - 6, below ? y + 3 : y - 3); }
+  ctx.restore();
+}
+function vline(ctx, box, x, col, lab, bottom) {
+  ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x, box.y); ctx.lineTo(x, box.y + box.h); ctx.stroke(); ctx.setLineDash([]);
+  if (lab) { ctx.fillStyle = col; ctx.font = '11px ' + SANS; ctx.textAlign = 'right'; ctx.textBaseline = bottom ? 'bottom' : 'top'; ctx.fillText(lab, x - 4, bottom ? box.y + box.h - 4 : box.y + 4); }
+  ctx.restore();
+}
+function drawSpec(cv, P, o) {
+  const { ctx, w, h } = prep(cv);
+  const N2 = P.length - 1, NF = N2 * 2;
+  const box = { x: 46, y: 18, w: w - 46 - 12, h: h - 18 - 36 };
+  const fmax = o.fs / 2 / o.xs;
+  const { X, Y } = axes(ctx, { ...box, xmin: 0, xmax: fmax, ymin: o.ymin, ymax: 0, xt: niceTicks(0, fmax, 5), yt: niceTicks(o.ymin, 0, 6), xl: o.xl, yl: o.yl });
+  const db = k => 10 * Math.log10(P[k] / o.ref + 1e-40);
+  clipBox(ctx, box);
+  const cols = Math.max(1, Math.floor(box.w));
+  ctx.strokeStyle = C.accent; ctx.lineWidth = 1; ctx.beginPath();
+  for (let px = 0; px < cols; px++) {
+    const k0 = Math.max(1, Math.floor(px / cols * N2)), k1 = Math.max(k0, Math.floor((px + 1) / cols * N2));
+    let m = -400; for (let k = k0; k <= k1 && k <= N2; k++) m = Math.max(m, db(k));
+    const x = box.x + px + .5; ctx.moveTo(x, box.y + box.h); ctx.lineTo(x, Y(Math.max(m, o.ymin)));
+  }
+  ctx.stroke();
+  ctx.font = '11px ' + MONO; ctx.textBaseline = 'bottom';
+  for (const mk of o.marks || []) {
+    const d = db(mk.k); if (d < o.ymin + 12) continue;
+    ctx.fillStyle = mk.color; ctx.textAlign = mk.dx ? 'left' : 'center';
+    ctx.fillText(mk.label, X(mk.k / NF * o.fs / o.xs) + (mk.dx || 0), Math.max(box.y + 14, Y(d) - 3));
+  }
+  ctx.restore();
+}
+
+/* =========== Ch9 residue amplifier settling =========== */
+(() => {
+  const S = { type: '1.5' }, GG = { '1.5': 2, '2.5': 4, '3.5': 8 };
+  function draw() {
+    const G = GG[S.type], beta = 1 / (G + S.cp), wu = 2 * Math.PI * S.gbw, Aol = Math.pow(10, S.AdB / 20);
+    const wc = beta * wu, p2 = wc * Math.tan(S.pm * Math.PI / 180), tau = 1 / wc;
+    const Tav = 0.4 / S.fs, Tsim = 1.3 * Tav, V = 1, req = G / Math.pow(2, S.N), SR = S.sr;
+    const n = clamp(Math.ceil(Tsim / (Math.min(tau, 1 / p2) / 40)), 400, 250000), h = Tsim / n;
+    const deriv = (a, b) => {
+      let d = wu * beta * (V - b) - (wu / Aol) * a, s = 0;
+      if (d > SR) { d = SR; s = 1; } else if (d < -SR) { d = -SR; s = 1; }
+      return [d, p2 * (a - b), s];
+    };
+    let v1 = 0, vo = 0, lastBad = 0, errAt = NaN, slewT = 0, vmax = 0;
+    const every = Math.max(1, Math.floor(n / 900)), T = [], VO = [], SL = [], ER = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i * h, e = Math.abs(V - vo);
+      if (e > req) lastBad = t;
+      if (isNaN(errAt) && t >= Tav) errAt = e;
+      const k1 = deriv(v1, vo);
+      if (k1[2] && t < Tav) slewT += h;
+      if (i % every === 0 || i === n) { T.push(t * 1e9); VO.push(vo); SL.push(k1[2]); ER.push(Math.log10(Math.max(e, 1e-9))); vmax = Math.max(vmax, vo); }
+      if (i === n) break;
+      const k2 = deriv(v1 + h / 2 * k1[0], vo + h / 2 * k1[1]), k3 = deriv(v1 + h / 2 * k2[0], vo + h / 2 * k2[1]), k4 = deriv(v1 + h * k3[0], vo + h * k3[1]);
+      v1 += h / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]);
+      vo += h / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+    }
+    const ok = errAt <= req, floorE = V / (1 + Aol * beta);
+    const gbwReq = Math.log(V / req) / (2 * Math.PI * beta * Tav), aReq = 20 * Math.log10(V / (beta * req));
+    $('#a9-kv').innerHTML = kvHTML([
+      ['β', beta.toFixed(3)], ['τ', eng(tau, 's')], ['可用建立时间', eng(Tav, 's')], ['其中压摆', eng(slewT, 's')],
+      ['结束时误差', eng(errAt, 'V')], ['允许误差', eng(req, 'V')], ['线性建立所需 GBW', '≥ ' + eng(gbwReq, 'Hz')], ['静态误差所需增益', '≥ ' + aReq.toFixed(1) + ' dB']
+    ]);
+    const pill = $('#a9-pill');
+    if (ok) { pill.className = 'pill ok'; pill.textContent = `满足 ${S.N} 位：${eng(lastBad, 's')} 时进入误差带`; }
+    else { pill.className = 'pill bad'; pill.textContent = `不满足 ${S.N} 位：` + (floorE > req ? '直流增益不够' : '建立时间不够'); }
+    const xm = Tsim * 1e9;
+    {
+      const cv = $('#a9-wave'), { ctx, w, h: hh } = prep(cv);
+      const box = { x: 46, y: 20, w: w - 46 - 12, h: hh - 20 - 36 };
+      const ymax = Math.max(1.15, vmax + .05);
+      const { X, Y } = axes(ctx, { ...box, xmin: 0, xmax: xm, ymin: -.05, ymax, xt: niceTicks(0, xm, 5), yt: niceTicks(0, ymax, 4), xl: 't / ns', yl: 'V_out / V' });
+      clipBox(ctx, box);
+      hline(ctx, box, Y(1), C.ok, '');
+      vline(ctx, box, X(Tav * 1e9), A(C.ink, .6), '可用时间');
+      ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+      for (let i = 1; i < T.length; i++) { ctx.strokeStyle = SL[i] ? C.ch1 : C.accent; ctx.beginPath(); ctx.moveTo(X(T[i - 1]), Y(VO[i - 1])); ctx.lineTo(X(T[i]), Y(VO[i])); ctx.stroke(); }
+      ctx.font = '11px ' + SANS; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+      ctx.fillStyle = C.ch1; ctx.fillText('压摆', box.x + box.w - 8, box.y + box.h - 22);
+      ctx.fillStyle = C.accent; ctx.fillText('线性建立', box.x + box.w - 8, box.y + box.h - 6);
+      ctx.restore();
+    }
+    {
+      const cv = $('#a9-err'), { ctx, w, h: hh } = prep(cv);
+      const box = { x: 58, y: 20, w: w - 58 - 12, h: hh - 20 - 36 };
+      const { X, Y } = axes(ctx, { ...box, xmin: 0, xmax: xm, ymin: -7, ymax: .2, xt: niceTicks(0, xm, 5), yt: [-7, -6, -5, -4, -3, -2, -1, 0], yf: logLab, xl: 't / ns', yl: '|误差|' });
+      clipBox(ctx, box);
+      const yr = Y(Math.log10(req)), yf = Y(Math.log10(floorE));
+      hline(ctx, box, yr, C.ok, S.N + ' 位要求', false);
+      if (floorE > 1e-7) hline(ctx, box, yf, C.ch3, '有限增益误差底', Math.abs(yf - yr) < 16 && yf > yr);
+      vline(ctx, box, X(Tav * 1e9), A(C.ink, .6), '');
+      ctx.lineWidth = 1.8;
+      for (let i = 1; i < T.length; i++) { ctx.strokeStyle = SL[i] ? C.ch1 : C.accent; ctx.beginPath(); ctx.moveTo(X(T[i - 1]), Y(ER[i - 1])); ctx.lineTo(X(T[i]), Y(ER[i])); ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+  bindRange('a9-fs', v => eng(v, 'S/s'), v => S.fs = v, true, draw);
+  bindRange('a9-gbw', v => eng(v, 'Hz'), v => S.gbw = v, true, draw);
+  bindRange('a9-sr', v => parseFloat(v.toPrecision(2)) + ' V/µs', v => S.sr = v * 1e6, true, draw);
+  bindRange('a9-pm', v => v + '°', v => S.pm = v, false, draw);
+  bindRange('a9-a', v => v + ' dB', v => S.AdB = v, false, draw);
+  bindRange('a9-cp', v => v.toFixed(2), v => S.cp = v, false, draw);
+  bindRange('a9-n', v => v + ' 位', v => S.N = v, false, draw);
+  seg($('#a9-type'), v => { S.type = v; draw(); });
+  onRedraw(draw);
+})();
+
+/* =========== Ch10 sampling switch =========== */
+(() => {
+  const S = { type: 'boot' }, FS = 1e9, NF = 4096, KB = 1.380649e-23, TK = 300;
+  const vthN = vsb => 0.4 + 0.4 * (Math.sqrt(0.8 + Math.max(vsb, 0)) - Math.sqrt(0.8));
+  const ron = (type, v) => {
+    const k = 0.05 * S.size, vdd = S.vdd;
+    const rn = 1 / (k * Math.max(vdd - v - vthN(v), 0.004));
+    if (type === 'n') return rn;
+    if (type === 'tg') { const rp = 1 / (k * Math.max(v - vthN(vdd - v), 0.004)); return rn * rp / (rn + rp); }
+    return 1 / (k * Math.max(vdd - vthN(v), 0.004));
+  };
+  const TYPES = [['n', 'ch2', 'NMOS'], ['tg', 'ch1', 'CMOS 传输门'], ['boot', 'ch3', '栅压自举']];
+  function draw() {
+    const vdd = S.vdd, Amp = 0.4 * vdd, vcm = vdd / 2;
+    {
+      const cv = $('#s10-ron'), { ctx, w, h } = prep(cv);
+      const box = { x: 52, y: 20, w: w - 52 - 12, h: h - 20 - 36 };
+      const { X, Y } = axes(ctx, { ...box, xmin: 0, xmax: vdd, ymin: .5, ymax: 4.3, xt: niceTicks(0, vdd, 6), yt: [1, 2, 3, 4], yf: t => ['', '10 Ω', '100 Ω', '1 kΩ', '10 kΩ'][t], xl: 'V_in / V', yl: 'R_on' });
+      clipBox(ctx, box);
+      ctx.fillStyle = A(C.accent, .07); ctx.fillRect(X(vcm - Amp), box.y, X(vcm + Amp) - X(vcm - Amp), box.h);
+      const order = TYPES.filter(t => t[0] !== S.type).concat(TYPES.filter(t => t[0] === S.type));
+      for (const [ty, col] of order) {
+        const act = ty === S.type; ctx.strokeStyle = act ? C[col] : A(C[col], .45); ctx.lineWidth = act ? 2.6 : 1.4; ctx.beginPath();
+        for (let i = 0; i <= 300; i++) { const v = vdd * i / 300, y = Y(Math.log10(Math.min(ron(ty, v), 3e4))); i ? ctx.lineTo(X(v), y) : ctx.moveTo(X(v), y); }
+        ctx.stroke();
+      }
+      ctx.font = '11px ' + SANS; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      TYPES.forEach(([ty, col, name], i) => {
+        const y = box.y + 12 + i * 16; ctx.strokeStyle = C[col]; ctx.lineWidth = ty === S.type ? 2.6 : 1.4;
+        ctx.beginPath(); ctx.moveTo(box.x + 8, y); ctx.lineTo(box.x + 24, y); ctx.stroke();
+        ctx.fillStyle = ty === S.type ? C.ink : C.muted; ctx.fillText(name, box.x + 30, y);
+      });
+      ctx.restore();
+    }
+    const J = oddBin(S.fin, FS, NF), fin = J / NF * FS, w0 = 2 * Math.PI * fin, x = new Float64Array(NF);
+    for (let n = 0; n < NF; n++) {
+      const th = w0 * n / FS + .2, v = vcm + Amp * Math.sin(th), dv = Amp * w0 * Math.cos(th);
+      x[n] = clamp(v - ron(S.type, v) * S.c * dv, -.5, vdd + .5);
+    }
+    const st = specStats(x, J);
+    let ph = 0; for (let hh = 2; hh <= 7; hh++) ph += st.P[foldBin(hh * J, NF)];
+    const thd = 10 * Math.log10(ph / st.P[J] + 1e-30);
+    const marks = [{ k: J, label: '基波', color: C.ink, dx: 6 }];
+    for (let hh = 2; hh <= 5; hh++) marks.push({ k: foldBin(hh * J, NF), label: 'H' + hh, color: C.err });
+    drawSpec($('#s10-spec'), st.P, { ref: st.P[J], fs: FS, xs: 1e6, xl: 'f / MHz', yl: 'dBc', ymin: -140, marks });
+    const r0 = ron(S.type, vcm), snrK = 20 * Math.log10((Amp / Math.SQRT2) / Math.sqrt(KB * TK / S.c)), snrJ = -20 * Math.log10(2 * Math.PI * fin * S.jit);
+    const sf = Math.min(st.sfdr, 160);
+    $('#s10-met').innerHTML = metricsHTML([
+      { k: 'SFDR（开关失真）', v: sf.toFixed(1), u: 'dB', c: sf > 80 ? 'good' : sf > 60 ? 'mid' : 'poor' },
+      { k: 'THD', v: Math.max(thd, -160).toFixed(1), u: 'dB' },
+      { k: 'R_on（输入中点）', v: eng(r0, 'Ω') },
+      { k: 'RC 跟踪带宽', v: eng(1 / (2 * Math.PI * r0 * S.c), 'Hz') },
+      { k: 'SNR 上限（kT/C）', v: snrK.toFixed(1), u: 'dB' },
+      { k: 'SNR 上限（抖动）', v: snrJ.toFixed(1), u: 'dB' }
+    ]);
+    $('#s10-finr').textContent = '相干采样后 f_in = ' + eng(fin, 'Hz');
+    $('#s10-dt').textContent = eng(0.25 / (2 * Math.PI * fin), 's');
+  }
+  seg($('#s10-type'), v => { S.type = v; draw(); });
+  bindRange('s10-vdd', v => v.toFixed(2) + ' V', v => S.vdd = v, false, draw);
+  bindRange('s10-size', v => '×' + v.toFixed(2), v => S.size = v, true, draw);
+  bindRange('s10-c', v => eng(v * 1e-12, 'F'), v => S.c = v * 1e-12, true, draw);
+  bindRange('s10-fin', v => eng(v, 'Hz'), v => S.fin = v, true, draw);
+  bindRange('s10-jit', v => eng(v * 1e-15, 's'), v => S.jit = v * 1e-15, true, draw);
+  onRedraw(draw);
+})();
+
+/* =========== Ch11 StrongARM comparator =========== */
+(() => {
+  const S = {}, AINT = 5, TINT = 20e-12, VDD = 1, AVT = 3e-3;
+  const mos = (x, yc, gs, p, label) => {
+    const pl = x + gs * 8, l0 = x + gs * (p ? 14.5 : 8), l1 = x + gs * 24;
+    let s = `<path class="dev" d="M${x} ${yc - 14} V${yc + 14}"/><path class="pl" d="M${pl} ${yc - 11} V${yc + 11}"/>`;
+    if (p) s += `<circle class="bub" cx="${x + gs * 11.3}" cy="${yc}" r="3"/>`;
+    s += `<path class="pl" d="M${l0} ${yc} H${l1}"/>`;
+    s += `<text class="dl" x="${x - gs * 10}" y="${yc + 4}" text-anchor="${gs > 0 ? 'end' : 'start'}">${label}</text>`;
+    return s;
+  };
+  const W = d => `<path class="w" d="${d}"/>`;
+  const svg = $('#sa');
+  svg.innerHTML =
+    `<path class="rail" d="M90 30 H470"/><text class="nl" x="476" y="34">V_DD</text>` +
+    `<path class="rail" d="M236 380 H324"/><text class="dl" x="330" y="384">GND</text>` +
+    `<g class="g-rst">${mos(130, 78, -1, true, 'S1')}${mos(430, 78, 1, true, 'S2')}${W('M130 64 V30 M130 92 V112 H220 M430 64 V30 M430 92 V112 H340')}` +
+    `<text class="dl" x="102" y="82" text-anchor="end">CLK</text><text class="dl" x="458" y="82">CLK</text></g>` +
+    `<g class="g-lat">${mos(220, 78, 1, true, 'M5')}${mos(340, 78, -1, true, 'M6')}${mos(220, 160, 1, false, 'M3')}${mos(340, 160, -1, false, 'M4')}` +
+    `${W('M220 64 V30 M340 64 V30 M220 92 V146 M340 92 V146 M244 78 V160 M316 78 V160 M244 132 L340 112 M316 132 L220 112')}</g>` +
+    `${W('M220 174 V226 M340 174 V226')}` +
+    `<g class="g-in">${mos(220, 240, -1, false, 'M1')}${mos(340, 240, 1, false, 'M2')}${mos(280, 316, -1, false, 'M7')}` +
+    `${W('M220 254 V280 H340 V254 M280 280 V302 M280 330 V380')}` +
+    `<text class="nl" x="192" y="244" text-anchor="end">V_in+</text><text class="nl" x="368" y="244">V_in−</text><text class="dl" x="252" y="320" text-anchor="end">CLK</text></g>` +
+    `<circle class="dot" cx="220" cy="112" r="3"/><circle class="dot" cx="340" cy="112" r="3"/><circle class="dot" cx="244" cy="132" r="3"/><circle class="dot" cx="316" cy="132" r="3"/><circle class="dot" cx="280" cy="280" r="3"/>` +
+    `<text class="nl" x="166" y="106">V_o−</text><text class="nl" x="380" y="106">V_o+</text><text class="dl" x="228" y="206">P</text><text class="dl" x="332" y="206" text-anchor="end">Q</text>`;
+  seg($('#sa-ph'), v => { svg.dataset.ph = v; $$('.sa-card').forEach(c => c.classList.toggle('on', c.dataset.ph === v)); });
+
+  function draw() {
+    const tau = S.tau, Tav = S.tav;
+    const tdec = dv => AINT * dv >= VDD / 2 ? TINT * (VDD / 2) / (AINT * dv) : TINT + tau * Math.log((VDD / 2) / (AINT * dv));
+    const vd = (dv, t) => t < TINT ? AINT * dv * Math.max(t, 1e-13) / TINT : Math.min(VDD, AINT * dv * Math.exp((t - TINT) / tau));
+    const td = tdec(S.dv), xm = Math.min(Math.max(1.25 * Tav, 1.15 * td), 4 * Tav) * 1e12;
+    const cv = $('#c11-plot'), { ctx, w, h } = prep(cv);
+    const box = { x: 58, y: 20, w: w - 58 - 12, h: h - 20 - 36 };
+    const { X, Y } = axes(ctx, { ...box, xmin: 0, xmax: xm, ymin: -7, ymax: 0, xt: niceTicks(0, xm, 6), yt: [-7, -6, -5, -4, -3, -2, -1, 0], yf: logLab, xl: 't / ps', yl: '|V_o+ − V_o−|' });
+    clipBox(ctx, box);
+    ctx.fillStyle = A(C.err, .07); ctx.fillRect(X(Tav * 1e12), box.y, box.w, box.h);
+    const curve = (dv, col, lw) => {
+      ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath();
+      for (let i = 0; i <= 400; i++) { const t = xm * i / 400, y = Y(Math.log10(Math.max(vd(dv, t * 1e-12), 1e-8))); i ? ctx.lineTo(X(t), y) : ctx.moveTo(X(t), y); }
+      ctx.stroke();
+    };
+    for (let e = -6; e <= -1; e++) curve(Math.pow(10, e), A(C.muted, .55), 1);
+    hline(ctx, box, Y(Math.log10(VDD / 2)), C.ink, '判决完成（V_DD/2）', true);
+    vline(ctx, box, X(Tav * 1e12), C.err, '可用时间', true);
+    curve(S.dv, C.accent, 2.6);
+    if (td * 1e12 <= xm) { ctx.fillStyle = C.accent; ctx.beginPath(); ctx.arc(X(td * 1e12), Y(Math.log10(VDD / 2)), 4.5, 0, 7); ctx.fill(); }
+    ctx.restore();
+    const dvmin = (VDD / 2) / AINT * Math.exp(-(Tav - TINT) / tau), p = Math.min(1, dvmin);
+    const gap = 1 / (p * 1e9), gapS = gap > 3.15e7 ? sci(gap / 3.15e7) + ' 年' : eng(gap, 's');
+    $('#c11-kv').innerHTML = kvHTML([
+      ['判决时间', eng(td, 's')], ['亚稳态窗口', '±' + eng(dvmin, 'V')],
+      ['单次出错概率（输入在 ±1 V 均匀分布）', sci(p)], ['1 GS/s 下平均每', gapS + ' 出现一次']
+    ]);
+    const pill = $('#c11-pill');
+    if (td <= Tav) { pill.className = 'pill ok'; pill.textContent = '在可用时间内完成判决'; }
+    else { pill.className = 'pill bad'; pill.textContent = '来不及判决：亚稳态'; }
+  }
+  function drawOff() {
+    const sig = AVT / Math.sqrt(S.wl);
+    $('#c11-sig').textContent = eng(sig, 'V');
+    let rows = '';
+    for (const n of [1, 2, 3, 4]) {
+      const tol = 1 / Math.pow(2, n + 1), z = tol / sig, p = erfc(z / Math.SQRT2), cnt = Math.pow(2, n + 1) - 2;
+      const y = Math.exp(cnt * Math.log1p(-Math.min(p, 0.999999999)));
+      const good = 1 - y < 1e-6, ys = good ? '> 99.9999%' : (y * 100).toFixed(y > .99 ? 4 : 1) + '%';
+      rows += `<tr><td>${n}.5 位</td><td>${cnt}</td><td>±${eng(tol, 'V')}</td><td>${z.toFixed(1)} σ</td><td>${sci(p)}</td><td class="${good ? 'y' : y > .99 ? '' : 'n'}">${ys}</td></tr>`;
+    }
+    $('#c11-tbl').innerHTML = rows;
+  }
+  bindRange('c11-dv', v => eng(v, 'V'), v => S.dv = v, true, draw);
+  bindRange('c11-tau', v => v + ' ps', v => S.tau = v * 1e-12, false, draw);
+  bindRange('c11-tav', v => v + ' ps', v => S.tav = v * 1e-12, false, draw);
+  bindRange('c11-wl', v => parseFloat(v.toPrecision(2)) + ' µm²', v => S.wl = v, true, drawOff);
+  drawOff();
+  onRedraw(draw);
+})();
+
+/* =========== Ch12 PN-dither background calibration =========== */
+(() => {
+  const S = { eps: -1.5, mu: '22', dk: 8 };
+  const NMAX = 1e8, NF = 4096, JT = 401, AMP = 0.85, TWO_PI = 2 * Math.PI;
+  let st = null, running = false, raf = 0, auto = false;
+  const btn = $('#c12-run');
+  const updBtn = () => { btn.textContent = running ? '暂停' : st && st.n >= NMAX ? '已完成' : st && st.n > 100 ? '继续' : '开始'; btn.setAttribute('aria-pressed', running); };
+  function enobFor(Gest) {
+    const x = new Float64Array(NF);
+    for (let n = 0; n < NF; n++) {
+      const v = st.Dd[n] * .5 + st.R[n] / Gest - st.q[n] * st.D;
+      x[n] = clamp(Math.floor((v + 1) * 2048), 0, 4095) - 2047.5;
+    }
+    return (specStats(x, JT).sndr + 20 * Math.log10(1 / AMP) - 1.76) / 6.02;
+  }
+  function reset() {
+    const G = 2 * (1 + S.eps / 100), D = 1 / S.dk, rng = mulberry32(99);
+    const q = new Int8Array(NF), Dd = new Int8Array(NF), R = new Float64Array(NF);
+    for (let n = 0; n < NF; n++) {
+      const v = AMP * Math.sin(TWO_PI * JT * n / NF + .37), qq = rng() < .5 ? -1 : 1, d = v >= .25 ? 1 : v < -.25 ? -1 : 0;
+      const r = clamp(G * (v - d * .5 + qq * D), -1, 1 - 1e-12);
+      R[n] = (Math.floor((r + 1) * 1024) + .5) / 1024 - 1; q[n] = qq; Dd[n] = d;
+    }
+    st = { G, D, a: 2 * D, n: 100, ph: 0, seed: 12345, q, Dd, R, hist: [] };
+    st.enob0 = enobFor(2); st.enobIdeal = enobFor(G);
+    st.hist.push({ n: 100, rel: Math.abs(2 / G - 1), enob: st.enob0 });
+  }
+  function run(count) {
+    let { a, n, ph, seed } = st;
+    const G = st.G, D = st.D, dph = TWO_PI * 0.0731234567, avg = S.mu === 'avg', mu = Math.pow(2, -(+S.mu || 0));
+    for (let i = 0; i < count; i++) {
+      ph += dph; if (ph > TWO_PI) ph -= TWO_PI;
+      const v = AMP * Math.sin(ph);
+      seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+      const qq = seed < 0 ? -1 : 1, d = v >= .25 ? 1 : v < -.25 ? -1 : 0;
+      let r = G * (v - d * .5 + qq * D); if (r >= 1) r = 1 - 1e-12; else if (r < -1) r = -1;
+      const rb = (Math.floor((r + 1) * 1024) + .5) / 1024 - 1;
+      n++; a += (avg ? 1 / n : mu) * (qq * rb - a);
+    }
+    st.a = a; st.n = n; st.ph = ph; st.seed = seed;
+  }
+  function frame() {
+    if (!running) return;
+    const c = Math.round(clamp(st.n * 0.06, 3000, 1e6));
+    run(Math.min(c, NMAX - st.n));
+    const Gest = st.a / st.D;
+    st.hist.push({ n: st.n, rel: Math.abs(Gest / st.G - 1), enob: enobFor(Gest) });
+    draw();
+    if (st.n >= NMAX) { running = false; updBtn(); return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function start() { if (running || st.n >= NMAX) return; running = true; updBtn(); raf = requestAnimationFrame(frame); }
+  function stop() { running = false; cancelAnimationFrame(raf); updBtn(); }
+  function restart() { stop(); reset(); draw(); start(); }
+  function draw() {
+    if (!st) return;
+    const cv = $('#c12-plot'), { ctx, w, h } = prep(cv);
+    const x0 = 64, wB = w - x0 - 14, gap = 34, ph = (h - 20 - gap - 36) / 2, xmax = Math.log10(NMAX);
+    const xt = [2, 3, 4, 5, 6, 7, 8], xf = t => '10' + supNum(t);
+    const b1 = { x: x0, y: 20, w: wB, h: ph }, b2 = { x: x0, y: 20 + ph + gap, w: wB, h: ph };
+    const a1 = axes(ctx, { ...b1, xmin: 2, xmax, ymin: -5, ymax: -1, xt, noXLab: true, yt: [-5, -4, -3, -2, -1], yf: t => ['0.001%', '0.01%', '0.1%', '1%', '10%'][t + 5], yl: '增益估计误差 |Ĝ/G′ − 1|' });
+    const a2 = axes(ctx, { ...b2, xmin: 2, xmax, ymin: 6, ymax: 12.5, xt, xf, yt: [6, 7, 8, 9, 10, 11, 12], yl: 'ENOB / 位', xl: '已处理样本数' });
+    clipBox(ctx, b1);
+    hline(ctx, b1, a1.Y(Math.log10(Math.pow(2, -12))), C.ok, '约 12 位所需', false);
+    ctx.strokeStyle = C.accent; ctx.lineWidth = 1.8; ctx.beginPath();
+    st.hist.forEach((p, i) => { const x = a1.X(Math.log10(p.n)), y = a1.Y(clamp(Math.log10(Math.max(p.rel, 1e-9)), -5.5, -.5)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke(); ctx.restore();
+    clipBox(ctx, b2);
+    hline(ctx, b2, a2.Y(st.enobIdeal), C.ok, '完美校准', true);
+    hline(ctx, b2, a2.Y(st.enob0), C.muted, '未校准', false);
+    ctx.strokeStyle = C.ch3; ctx.lineWidth = 1.8; ctx.beginPath();
+    st.hist.forEach((p, i) => { const x = a2.X(Math.log10(p.n)), y = a2.Y(clamp(p.enob, 5.5, 12.5)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke(); ctx.restore();
+    const last = st.hist[st.hist.length - 1], Gest = st.a / st.D;
+    $('#c12-kv').innerHTML = kvHTML([
+      ['已处理样本', sci(st.n, 2)], ['实际增益 G′', st.G.toFixed(5)], ['估计 Ĝ', Gest.toFixed(5)],
+      ['相对误差', (last.rel * 100).toFixed(last.rel < 1e-3 ? 4 : 3) + '%'], ['当前 ENOB', last.enob.toFixed(2) + ' 位']
+    ]);
+  }
+  btn.addEventListener('click', () => { if (running) stop(); else start(); });
+  $('#c12-reset').addEventListener('click', restart);
+  bindRange('c12-eps', v => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v).toFixed(1) + ' %', v => S.eps = v, false, () => { if (auto) restart(); else { reset(); draw(); } });
+  seg($('#c12-mu'), v => { S.mu = v; restart(); auto = true; });
+  seg($('#c12-d'), v => { S.dk = +v; restart(); auto = true; });
+  reset(); updBtn();
+  onRedraw(draw);
+  const bench = $('#c12-bench');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting) && !auto) { auto = true; start(); io.disconnect(); } }, { threshold: .3 });
+    io.observe(bench);
+  }
+  btn.addEventListener('click', () => { auto = true; }, { once: true });
+})();
+
+/* =========== Ch13 time-interleaving =========== */
+(() => {
+  const S = { M: 4, seed: 3 }, FS = 4e9, NF = 4096, AMP = Math.pow(10, -1 / 20);
+  function draw() {
+    const g = gaussFn(mulberry32(S.seed * 7919 + 5)), M = S.M, off = [], gn = [], sk = [];
+    for (let m = 0; m < M; m++) { const a = g(), b = g(), c = g(); off.push(M > 1 ? a * S.off / 1000 : 0); gn.push(M > 1 ? b * S.gain / 100 : 0); sk.push(M > 1 ? c * S.skew * 1e-12 : 0); }
+    const J = oddBin(S.fin, FS, NF), fin = J / NF * FS, x = new Float64Array(NF);
+    for (let n = 0; n < NF; n++) {
+      const m = n % M, v = (1 + gn[m]) * AMP * Math.sin(2 * Math.PI * fin * (n / FS + sk[m]) + .3) + off[m];
+      x[n] = clamp(Math.floor((v + 1) * 2048), 0, 4095) - 2047.5;
+    }
+    const st = specStats(x, J);
+    const marks = [{ k: J, label: '信号', color: C.ink, dx: 6 }], seen = new Set([J]);
+    for (let k = 1; k < M; k++) {
+      const b0 = foldBin(k * NF / M, NF);
+      if (b0 && !seen.has(b0)) { seen.add(b0); marks.push({ k: b0, label: '失调', color: C.ch1 }); }
+      for (const b of [foldBin(k * NF / M + J, NF), foldBin(k * NF / M - J, NF)]) if (b && !seen.has(b)) { seen.add(b); marks.push({ k: b, label: '增益/时序', color: C.ch3 }); }
+    }
+    drawSpec($('#t13-spec'), st.P, { ref: Math.pow(2048 * NF / 2, 2), fs: FS, xs: 1e9, xl: 'f / GHz', yl: 'dBFS', ymin: -130, marks });
+    const enob = (st.sndr + 1 - 1.76) / 6.02;
+    const snrSk = S.skew > 0 && M > 1 ? -20 * Math.log10(2 * Math.PI * fin * S.skew * 1e-12) : NaN;
+    $('#t13-met').innerHTML = metricsHTML([
+      { k: 'SNDR', v: st.sndr.toFixed(1), u: 'dB' },
+      { k: 'SFDR', v: st.sfdr.toFixed(1), u: 'dB', c: st.sfdr > 75 ? 'good' : st.sfdr > 55 ? 'mid' : 'poor' },
+      { k: 'ENOB（满量程）', v: enob.toFixed(2), u: '位', c: enob > 11.3 ? 'good' : enob > 9.5 ? 'mid' : 'poor' },
+      { k: '每个子 ADC 速率', v: eng(FS / M, 'S/s') },
+      { k: '实际输入频率', v: eng(fin, 'Hz') },
+      { k: '时序失配限制 SNR ≈', v: isNaN(snrSk) ? '—' : snrSk.toFixed(1), u: isNaN(snrSk) ? '' : 'dB' }
+    ]);
+  }
+  seg($('#t13-M'), v => { S.M = +v; draw(); });
+  bindRange('t13-off', v => v.toFixed(1) + ' mV', v => S.off = v, false, draw);
+  bindRange('t13-gain', v => v.toFixed(2) + ' %', v => S.gain = v, false, draw);
+  bindRange('t13-skew', v => v.toFixed(2) + ' ps', v => S.skew = v, false, draw);
+  bindRange('t13-fin', v => eng(v, 'Hz'), v => S.fin = v, true, draw);
+  $('#t13-reseed').addEventListener('click', () => { S.seed++; draw(); });
+  onRedraw(draw);
+})();
+
+/* =========== Ch13 architecture map =========== */
+(() => {
+  const R = [
+    { k: 'ds', name: 'Δ-Σ', f: [3, 8.5], b: [12, 24], col: 'ok', d: '过采样加噪声整形，用速度换精度。音频、精密测量、传感器。离散时间结构的带宽多在 MHz 级以下，连续时间结构可到数十至数百 MHz。' },
+    { k: 'sar', name: 'SAR', f: [3, 8.7], b: [8, 18], col: 'ch2', d: '二分搜索，一个比较器加电容 DAC，几乎只有动态功耗，能效最高。8 到 18 位，单通道最高到数百 MS/s。' },
+    { k: 'pipe', name: '流水线（运放型）', f: [7, 9.3], b: [10, 16], col: 'accent', d: '本讲义的主角。10 到 16 位，十几 MS/s 到 GS/s 级，是速度和精度的平衡点；功耗主要花在运放上。' },
+    { k: 'psar', name: '流水线 SAR', f: [7.7, 9.3], b: [10, 14], col: 'ch3', d: '首级 SAR 量化多位，放大残差后交给第二级 SAR。兼有 SAR 的能效和流水线的速度，是现在中高速、中高精度的主流之一。' },
+    { k: 'flash', name: 'Flash / 折叠插值', f: [8.5, 10.5], b: [4, 8], col: 'ch1', d: '全并行比较，速度最快；比较器数量随位数指数增长，一般不超过 8 位。也常作为流水线末级或子 ADC。' },
+    { k: 'ti', name: '时间交织', f: [9, 11], b: [6, 14], col: 'ink', d: '多个子 ADC 轮流采样，总速率乘以通道数，可达数十 GS/s；子 ADC 多为 SAR 或流水线 SAR。难点是通道失配校准。' }
+  ];
+  let hi = 'pipe';
+  const cv = $('#map');
+  function draw() {
+    const { ctx, w, h } = prep(cv);
+    const box = { x: 40, y: 18, w: w - 40 - 12, h: h - 18 - 36 };
+    const { X, Y } = axes(ctx, { ...box, xmin: 3, xmax: 11, ymin: 4, ymax: 24, xt: [3, 4, 5, 6, 7, 8, 9, 10, 11], xf: t => ['1k', '10k', '100k', '1M', '10M', '100M', '1G', '10G', '100G'][t - 3], yt: [4, 8, 12, 16, 20, 24], xl: '采样率（S/s）', yl: '分辨率 / 位' });
+    cv._reg = [];
+    clipBox(ctx, box);
+    for (const r of R) {
+      const x0 = X(r.f[0]), x1 = X(r.f[1]), y0 = Y(r.b[1]), y1 = Y(r.b[0]), on = r.k === hi;
+      ctx.fillStyle = A(C[r.col], on ? .28 : .09); ctx.strokeStyle = A(C[r.col], on ? 1 : .55); ctx.lineWidth = on ? 2 : 1;
+      ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x0, y0, x1 - x0, y1 - y0, 8); else ctx.rect(x0, y0, x1 - x0, y1 - y0);
+      ctx.fill(); ctx.stroke();
+      cv._reg.push({ r, x0, x1, y0, y1 });
+    }
+    for (const g of cv._reg) {
+      ctx.font = (g.r.k === hi ? '700 ' : '500 ') + '12px ' + SANS; ctx.fillStyle = C[g.r.col]; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(g.r.name, g.x0 + 6, g.y0 + 5);
+    }
+    ctx.restore();
+    const cur = R.find(r => r.k === hi);
+    $('#map-desc').innerHTML = `<b style="color:var(--${cur.col})">${cur.name}</b>${cur.d}`;
+  }
+  const pick = e => {
+    if (!cv._reg) return;
+    const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+    for (let i = cv._reg.length - 1; i >= 0; i--) { const g = cv._reg[i]; if (x >= g.x0 && x <= g.x1 && y >= g.y0 && y <= g.y1) { if (g.r.k !== hi) { hi = g.r.k; draw(); } return; } }
+  };
+  cv.addEventListener('pointermove', pick); cv.addEventListener('pointerdown', pick);
+  onRedraw(draw);
+})();
+
+/* =========== Ch13 FoM calculator =========== */
+(() => {
+  function calc() {
+    const P = +$('#fom-p').value * 1e-3, fs = +$('#fom-fs').value * 1e6, sndr = +$('#fom-sndr').value;
+    if (!(P > 0 && fs > 0) || !isFinite(sndr)) { $('#fom-out').textContent = '功耗和采样率需要是正数。'; return; }
+    const enob = (sndr - 1.76) / 6.02, fw = P / (Math.pow(2, enob) * fs), fsch = sndr + 10 * Math.log10(fs / 2 / P);
+    $('#fom-out').innerHTML = kvHTML([['ENOB', enob.toFixed(2) + ' 位'], ['Walden FoM', eng(fw, 'J') + '/conv-step'], ['Schreier FoM', fsch.toFixed(1) + ' dB']]);
+  }
+  ['fom-p', 'fom-fs', 'fom-sndr'].forEach(id => $('#' + id).addEventListener('input', calc));
+  calc();
 })();
 
 /* ---------- TOC highlight ---------- */
