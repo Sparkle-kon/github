@@ -200,10 +200,10 @@ svg .r.gy{transform-origin:center bottom}
 <main class="page">
   <header class="top">
     <div>
-      <div class="eyebrow">零基础 · 图解视频课 · 约 11 分钟</div>
+      <div class="eyebrow">零基础 · 图解视频课 · 约 12 分钟</div>
       <h1>金融市场图解课</h1>
     </div>
-    <p>一级市场和二级市场、股票、K 线、债券、基金、期货、期权，一次讲清楚。点击画面播放，可打开“朗读”让浏览器配音。</p>
+    <p>一级市场和二级市场、股票、K 线、债券、基金、期货、期权，一次讲清楚。点击画面播放，打开“配音”收听中文讲解。</p>
   </header>
 
   <div class="player">
@@ -777,11 +777,11 @@ svg .r.gy{transform-origin:center bottom}
       <div class="track" id="track" role="slider" tabindex="0" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="rail"></div><div class="fill" id="fill"></div><div class="knob" id="knob"></div></div>
       <span class="time" id="time">00:00 / 00:00</span>
       <select class="btn" id="speed" aria-label="播放速度"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select>
-      <button class="btn" id="voiceBtn" type="button" aria-pressed="false">朗读</button>
+      <button class="btn" id="voiceBtn" type="button" aria-pressed="false">配音：关</button>
       <button class="btn" id="fsBtn" type="button" aria-label="全屏">⛶</button>
     </div>
     <p class="capline" id="capline" aria-live="polite"></p>
-    <p class="note" id="voiceNote">快捷键：空格 播放/暂停，← → 快退/快进 5 秒。“朗读”使用浏览器自带的中文语音，效果因设备而异。</p>
+    <p class="note" id="voiceNote">快捷键：空格 播放/暂停，← → 快退/快进 5 秒。打开“配音”可以边看边听中文讲解。</p>
   </div>
 
   <div class="below">
@@ -845,13 +845,16 @@ svg .r.gy{transform-origin:center bottom}
   Array.prototype.forEach.call(stage.querySelectorAll('.dr'), function(p){ try { p.style.setProperty('--len', Math.ceil(p.getTotalLength()) + 1); } catch(e){} });
 
   /* ---------- timeline ---------- */
-  var LEAD = 600, TAIL = 1100, PER = 195, BASE = 900, MIN = 2800;
+  /* narration clip length per cue (ms), from audio/sNNcMM.mp3 */
+  var CUE_MS = {"s00c00":5736,"s00c01":8520,"s01c00":5760,"s01c01":6672,"s01c02":6264,"s01c03":6792,"s01c04":8880,"s02c00":4920,"s02c01":5376,"s02c02":8856,"s02c03":4920,"s02c04":6912,"s02c05":9072,"s02c06":6912,"s02c07":8232,"s03c00":6384,"s03c01":12072,"s03c02":7776,"s03c03":9984,"s04c00":3384,"s04c01":6816,"s04c02":5976,"s04c03":6552,"s04c04":4272,"s04c05":6696,"s05c00":6480,"s05c01":4056,"s05c02":6912,"s05c03":8064,"s05c04":7464,"s05c05":4920,"s06c00":6216,"s06c01":3312,"s06c02":5280,"s06c03":6312,"s06c04":6768,"s07c00":4800,"s07c01":7200,"s07c02":7152,"s07c03":3024,"s07c04":7440,"s07c05":8568,"s07c06":6600,"s08c00":3888,"s08c01":7440,"s08c02":6456,"s08c03":5904,"s08c04":7920,"s09c00":3336,"s09c01":8016,"s09c02":3960,"s10c00":7704,"s10c01":7968,"s10c02":8064,"s10c03":6864,"s10c04":5496,"s10c05":6120,"s10c06":8616,"s11c00":6744,"s11c01":7512,"s11c02":6576,"s11c03":7416,"s11c04":7464,"s11c05":6144,"s11c06":5568,"s12c00":7632,"s12c01":4368,"s12c02":8208,"s12c03":8160,"s12c04":6072,"s12c05":6816,"s13c00":8088,"s13c01":5640,"s13c02":10056,"s13c03":6384,"s13c04":6168,"s14c00":8040,"s14c01":7104,"s14c02":6696,"s15c00":2520,"s15c01":5568,"s15c02":6888,"s15c03":8568,"s15c04":6384,"s16c00":3672,"s16c01":9552,"s16c02":8256,"s16c03":5496,"s17c00":7032,"s17c01":8904,"s17c02":6000};
+  var LEAD = 600, TAIL = 1100, GAP = 650, PER = 195, BASE = 900, MIN = 2800;
   var total = 0;
+  function cid(i, c){ return 's' + String(i).padStart(2, '0') + 'c' + String(c).padStart(2, '0'); }
   function clen(s){ return s.replace(/\s/g, '').length; }
-  scenes.forEach(function(s){
+  scenes.forEach(function(s, si){
     s.cues = Array.prototype.map.call(s.querySelectorAll('.cues li'), function(li){ return li.textContent.trim(); });
     s.cueStart = []; var t = LEAD;
-    s.cues.forEach(function(c){ s.cueStart.push(t); t += Math.max(MIN, clen(c) * PER + BASE); });
+    s.cues.forEach(function(c, ci){ s.cueStart.push(t); var a = CUE_MS[cid(si, ci)]; t += a ? a + GAP : Math.max(MIN, clen(c) * PER + BASE); });
     s.dur = t + TAIL; s.start = total; total += s.dur;
     s.items = Array.prototype.map.call(s.querySelectorAll('[data-at]'), function(e){
       return {el: e, at: +e.getAttribute('data-at'), out: e.hasAttribute('data-out') ? +e.getAttribute('data-out') : 1e9};
@@ -864,7 +867,7 @@ svg .r.gy{transform-origin:center bottom}
     for (var k = 0; k < scenes.length; k++){ if (tt < scenes[k].start + scenes[k].dur){ i = k; break; } }
     var s = scenes[i], lt = tt - s.start, c = 0;
     for (var q = 0; q < s.cueStart.length; q++) if (lt >= s.cueStart[q]) c = q;
-    return {i: i, c: c};
+    return {i: i, c: c, lt: lt};
   }
   function fmt(ms){ var s = Math.floor(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
 
@@ -882,7 +885,7 @@ svg .r.gy{transform-origin:center bottom}
       s.items.forEach(function(o){ o.el.classList.toggle('on', c >= o.at && c < o.out); });
       subEl.textContent = s.cues[c]; capline.textContent = s.cues[c];
       subEl.classList.remove('swap'); void subEl.offsetWidth; subEl.classList.add('swap');
-      if (voiceOn && playing) speak(s.cues[c]);
+      if (voiceOn && playing) playCue(i, c, t - s.start - s.cueStart[c]);
     }
   }
 
@@ -898,14 +901,29 @@ svg .r.gy{transform-origin:center bottom}
     u.onend = u.onerror = function(){ if (utt === u) speakingNow = false; };
     utt = u; speakingNow = true; speechSynthesis.speak(u);
   }
-  function hush(){ if (hasTTS) speechSynthesis.cancel(); speakingNow = false; utt = null; }
+  var aud = null, audioOK = true;
+  function playCue(i, c, offset){
+    hush();
+    var id = cid(i, c), len = CUE_MS[id], text = scenes[i].cues[c];
+    if (!audioOK || !len){ if (offset < 400) speak(text); return; }
+    if (offset > len - 150) return;
+    var a = new Audio('audio/' + id + '.mp3' + (offset > 250 ? '#t=' + (offset / 1000).toFixed(2) : ''));
+    a.playbackRate = speed;
+    a.onended = function(){ if (aud === a) speakingNow = false; };
+    a.onerror = function(){ if (aud === a){ aud = null; audioOK = false; speakingNow = false; if (offset < 400) speak(text); } };
+    aud = a; speakingNow = true;
+    var pr = a.play(); if (pr && pr.catch) pr.catch(function(){ if (aud === a) speakingNow = false; });
+    var nx = c + 1 < scenes[i].cues.length ? cid(i, c + 1) : (i + 1 < scenes.length ? cid(i + 1, 0) : null);
+    if (nx){ var pre = new Audio(); pre.preload = 'auto'; pre.src = 'audio/' + nx + '.mp3'; }
+  }
+  function hush(){ if (aud){ aud.pause(); aud = null; } if (hasTTS) speechSynthesis.cancel(); speakingNow = false; utt = null; }
 
   /* ---------- transport ---------- */
   var playBtn = document.getElementById('playBtn');
   function setPlaying(p){
     if (p && t >= total) t = 0;
     playing = p; playBtn.textContent = p ? '❚❚ 暂停' : '▶ 播放';
-    if (!p) hush(); else if (voiceOn){ var L = locate(t); apply(L.i, L.c); speak(scenes[L.i].cues[L.c]); }
+    if (!p) hush(); else if (voiceOn){ var L = locate(t); apply(L.i, L.c); playCue(L.i, L.c, L.lt - scenes[L.i].cueStart[L.c]); }
   }
   function seek(nt){ t = Math.max(0, Math.min(total - 1, nt)); hush(); var L = locate(t); apply(L.i, L.c, true); }
 
@@ -963,13 +981,11 @@ svg .r.gy{transform-origin:center bottom}
   screenEl.addEventListener('click', function(){ if (!REC) setPlaying(!playing); });
   document.getElementById('prevBtn').addEventListener('click', function(){ var L = locate(t), s = scenes[L.i]; seek(t - s.start > 2500 || L.i === 0 ? s.start + 1 : scenes[L.i - 1].start + 1); });
   document.getElementById('nextBtn').addEventListener('click', function(){ var L = locate(t); if (L.i < scenes.length - 1) seek(scenes[L.i + 1].start + 1); });
-  document.getElementById('speed').addEventListener('change', function(e){ speed = +e.target.value; });
+  document.getElementById('speed').addEventListener('change', function(e){ speed = +e.target.value; if (aud) aud.playbackRate = speed; });
   var voiceBtn = document.getElementById('voiceBtn');
   voiceBtn.addEventListener('click', function(){
-    if (!hasTTS){ document.getElementById('voiceNote').textContent = '这个浏览器不支持语音朗读，可以直接看字幕。'; return; }
-    voiceOn = !voiceOn; voiceBtn.setAttribute('aria-pressed', voiceOn);
-    if (voiceOn && !zhVoice){ pickVoice(); if (!zhVoice) document.getElementById('voiceNote').textContent = '没有找到中文语音包，朗读可能不是中文发音；字幕始终可用。'; }
-    if (voiceOn && playing){ var L = locate(t); speak(scenes[L.i].cues[L.c]); } else hush();
+    voiceOn = !voiceOn; voiceBtn.setAttribute('aria-pressed', voiceOn); voiceBtn.textContent = voiceOn ? '配音：开' : '配音：关';
+    if (voiceOn && playing){ var L = locate(t); playCue(L.i, L.c, L.lt - scenes[L.i].cueStart[L.c]); } else hush();
   });
   document.getElementById('fsBtn').addEventListener('click', function(){
     if (document.fullscreenElement) document.exitFullscreen().catch(function(){});
@@ -989,10 +1005,13 @@ svg .r.gy{transform-origin:center bottom}
   });
 
   window.__total = total;
+  window.__cueTimes = [];
+  scenes.forEach(function(s, si){ s.cueStart.forEach(function(cs, ci){ window.__cueTimes.push({id: cid(si, ci), start: s.start + cs}); }); });
   window.__seek = seek;
   if (REC){
-    var go = function(){ setTimeout(function(){ ready = true; t = 0; last = performance.now(); playing = true; window.__started = true; }, 1500); };
-    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(go, go);
+    window.__go = function(){ ready = true; t = 0; last = performance.now(); playing = true; window.__started = true; };
+    var rdy = function(){ setTimeout(function(){ window.__ready = true; }, 1500); };
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(rdy, rdy);
   }
   requestAnimationFrame(frame);
 })();
