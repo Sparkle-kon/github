@@ -1,0 +1,1150 @@
+<title>带隙与电流源实验室</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<style>
+/* Layout: 一份「交互讲义」—— 每章左侧是原理图 + 旋钮，右侧是实时计算的曲线 + 读数，下面是原理卡片 */
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --surface-2:#E9EDF1; --ink:#14202B; --ink-2:#4F5D6B; --line:#D2D9E0; --grid:#E4E9EE; --dotgrid:#D5DCE3;
+  --accent:#0B7A70; --accent-ink:#FFFFFF; --ctat:#2A64CC; --ptat:#C9561A; --ok:#1E8048; --warn:#B87309; --bad:#C23A3A; --flow:#0B7A70;
+  --f-display:"Noto Serif SC","Songti SC","STSong",serif;
+  --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0D1216; --surface:#141B21; --surface-2:#1B242C; --ink:#E2E8ED; --ink-2:#98A6B3; --line:#29343E; --grid:#1E2830; --dotgrid:#26313A;
+  --accent:#3DC3B3; --accent-ink:#04201C; --ctat:#6E9CFF; --ptat:#FF8C4A; --ok:#4CC27E; --warn:#E6AA3C; --bad:#FF6B6B; --flow:#3DC3B3; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0D1216; --surface:#141B21; --surface-2:#1B242C; --ink:#E2E8ED; --ink-2:#98A6B3; --line:#29343E; --grid:#1E2830; --dotgrid:#26313A;
+  --accent:#3DC3B3; --accent-ink:#04201C; --ctat:#6E9CFF; --ptat:#FF8C4A; --ok:#4CC27E; --warn:#E6AA3C; --bad:#FF6B6B; --flow:#3DC3B3; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto}
+a{color:var(--accent)}
+sub,sup{font-size:72%;line-height:0}
+b,strong{font-weight:700}
+
+/* hero */
+.hero{padding-block:44px 22px}
+.eyebrow{font:500 12px/1.4 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4.6vw,46px);line-height:1.2;margin:10px 0 14px;text-wrap:balance;letter-spacing:.01em}
+.lede{max-width:44em;color:var(--ink-2);font-size:16px;margin:0}
+.path{list-style:none;padding:0;margin:26px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;counter-reset:step}
+.path li{counter-increment:step;min-width:0}
+.path a{display:grid;gap:2px;text-decoration:none;color:var(--ink);padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);height:100%}
+.path a::before{content:counter(step,decimal-leading-zero);font:600 12px/1 var(--f-mono);color:var(--accent);margin-bottom:6px}
+.path a span{font-size:13px;color:var(--ink-2);line-height:1.5}
+.path a:hover{border-color:var(--accent)}
+
+/* sticky nav */
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:1px solid var(--line);margin-top:28px}
+nav.toc .in{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:none}
+nav.toc a{flex:none;font-size:13px;padding:5px 12px;border-radius:999px;color:var(--ink-2);text-decoration:none;white-space:nowrap}
+nav.toc a[aria-current="true"]{background:var(--ink);color:var(--bg)}
+nav.toc a:hover{color:var(--ink)}
+
+/* chapter */
+section.ch{padding-block:46px 30px;border-bottom:1px solid var(--line);scroll-margin-top:56px}
+.ch-head{display:grid;gap:6px;margin-bottom:20px}
+.ch-no{font:600 13px/1 var(--f-mono);color:var(--accent);letter-spacing:.08em}
+h2{font-family:var(--f-display);font-size:clamp(23px,3vw,31px);line-height:1.3;margin:0;text-wrap:balance}
+h3{font-size:15px;margin:0 0 6px;font-weight:700}
+.ch-head p{margin:0;max-width:66ch;color:var(--ink-2)}
+p{max-width:70ch}
+
+.lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:18px;align-items:start}
+@media (max-width:900px){.lab{grid-template-columns:minmax(0,1fr)}}
+.col{display:grid;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.panel-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.panel-t h3{margin:0;font-size:13px;color:var(--ink-2);font-weight:500;letter-spacing:.04em}
+.schem{background-color:var(--surface);background-image:radial-gradient(var(--dotgrid) 1px,transparent 1.2px);background-size:20px 20px;background-position:10px 10px}
+.schem .scroll{overflow-x:auto}
+
+/* schematic */
+svg.sch{display:block;width:100%;height:auto;min-width:300px;max-height:420px}
+.sch .w{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sch .thick{stroke-width:3.2}
+.sch .rail{stroke-width:2}
+.sch .dot{fill:var(--ink)}
+.sch .ah{fill:var(--ink)}
+.sch .term{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+.sch .amp{fill:var(--surface)}
+.sch text{font:12px "JetBrains Mono","Noto Sans SC",ui-monospace,monospace;fill:var(--ink)}
+.sch .nm{font-weight:600}
+.sch .val{fill:var(--accent);font-size:11px;font-weight:500}
+.sch .sub{fill:var(--ink-2);font-size:11px}
+.sch .rg{font:10.5px "Noto Sans SC",system-ui,sans-serif}
+.sch .rg.sat{fill:var(--ok)} .sch .rg.tri{fill:var(--warn)} .sch .rg.off{fill:var(--bad)}
+.sch .flow{fill:none;stroke:var(--flow);stroke-width:3.4;stroke-linecap:round;stroke-dasharray:4 10;animation:flow var(--dur,1s) linear infinite;opacity:.9}
+.sch .flow.stop{opacity:0;animation:none}
+.sch .startup .w{stroke-dasharray:4 3}
+.sch .startup{transition:opacity .25s}
+.sch .startup.offst{opacity:.22}
+@keyframes flow{from{stroke-dashoffset:14}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.sch .flow{animation:none}}
+.key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2);margin-top:6px}
+.key i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+/* controls */
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button,.btn{font:inherit;font-size:13px;line-height:1.4;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ctl{display:grid;gap:10px}
+.sl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;font-size:13px;color:var(--ink-2);align-items:baseline}
+.sl output{font:500 13px var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.sl input{grid-column:1/-1;width:100%;margin:4px 0 0;accent-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.chk{display:inline-flex;gap:7px;align-items:center;font-size:13px;color:var(--ink);cursor:pointer}
+.chk input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.hint{font-size:12.5px;color:var(--ink-2);margin:0;line-height:1.6}
+
+/* plot */
+.plot{position:relative;width:100%;height:300px}
+.plot.sm{height:230px}
+.plot canvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:crosshair}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--ink-2);margin-top:6px}
+.legend>span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:16px;height:0;border-top:3px solid currentColor;border-radius:2px}
+.legend i.dash{border-top-style:dashed;border-top-width:2px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0}
+.stat{background:var(--surface);padding:9px 12px;min-width:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px -1px 0}
+.stat dt{font-size:12px;color:var(--ink-2);line-height:1.4}
+.stat dd{margin:3px 0 0;font:500 16.5px/1.3 var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat dd small{display:block;font:400 11px/1.4 var(--f-body);color:var(--ink-2);margin-top:2px}
+.stat.hl dd{color:var(--accent)}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font:600 12px/1.6 var(--f-body)}
+.pill.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.pill.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+
+/* notes */
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-top:18px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.note p{margin:0 0 8px;font-size:14px}
+.note p:last-child{margin-bottom:0}
+.note ul{margin:0;padding-left:18px;font-size:14px}
+.note li{margin:3px 0}
+.tag{font:600 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-bottom:8px;display:block}
+.eq{font-family:var(--f-mono);font-size:13.5px;background:var(--surface-2);border-radius:6px;padding:9px 12px;margin:6px 0;overflow-x:auto;white-space:nowrap;line-height:1.7}
+.eq + .eq{margin-top:-2px}
+.prose{display:grid;gap:10px;margin-bottom:20px}
+.prose p{margin:0}
+
+/* sum diagram */
+.sum{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin-bottom:14px}
+.sum .term-c{flex:1 1 150px;border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);min-width:0}
+.sum .term-c b{display:block;font:600 15px var(--f-mono)}
+.sum .term-c span{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums}
+.sum .term-c em{display:block;font-style:normal;font-size:12px;color:var(--ink-2)}
+.sum .c1{border-color:var(--ctat)} .sum .c1 b,.sum .c1 span{color:var(--ctat)}
+.sum .c2{border-color:var(--ptat)} .sum .c2 b,.sum .c2 span{color:var(--ptat)}
+.sum .c3{border-color:var(--accent)} .sum .c3 b,.sum .c3 span{color:var(--accent)}
+.sum .op{align-self:center;font:600 20px var(--f-mono);color:var(--ink-2)}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:18px}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--ink-2);font-size:12.5px;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.m{font-family:var(--f-mono);white-space:nowrap;font-size:13px}
+footer{padding-block:30px 60px;color:var(--ink-2);font-size:13px}
+footer p{margin:0 0 8px}
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">模拟 IC 基础 · 交互讲义</div>
+  <h1>带隙基准与电流源实验室</h1>
+  <p class="lede">从「复制一个电流」开始，一步步走到「造一个不随温度变化的电压」。页面里的每一条曲线都由器件模型实时算出：MOSFET 用平方律加沟道长度调制，BJT 用指数律加完整的 V<sub>BE</sub>(T) 温度模型。拖动旋钮，看原理图上的电流和工作区随之变化。</p>
+  <ol class="path">
+    <li><a href="#mirror">电流镜家族<span>复制电流；输出电阻与电压余量的拉锯</span></a></li>
+    <li><a href="#widlar">Widlar 电流源<span>用一个电阻产生很小的电流</span></a></li>
+    <li><a href="#selfbias">自偏置电流源<span>与电源无关，以及为何需要启动电路</span></a></li>
+    <li><a href="#bgp">带隙原理<span>CTAT + PTAT = 零温漂</span></a></li>
+    <li><a href="#bgs">带隙结构<span>Widlar、Brokaw、CMOS、Banba 与误差</span></a></li>
+  </ol>
+</header>
+
+<nav class="toc" aria-label="章节"><div class="in">
+  <a href="#mirror">01 电流镜</a><a href="#widlar">02 Widlar</a><a href="#selfbias">03 自偏置</a><a href="#bgp">04 带隙原理</a><a href="#bgs">05 带隙结构</a><a href="#compare">速查对比</a>
+</div></nav>
+
+<!-- ============ 01 MIRROR ============ -->
+<section class="ch" id="mirror">
+  <div class="ch-head">
+    <span class="ch-no">01</span>
+    <h2>电流镜：复制一个电流</h2>
+    <p>二极管连接的 M1 把参考电流 I<sub>REF</sub> 翻译成栅源电压 V<sub>GS</sub>，M2 拿到同一个 V<sub>GS</sub> 就流过同样的电流。真实晶体管的电流还随 V<sub>DS</sub> 变化（沟道长度调制 λ），所以输出端电压一动，电流就跟着动。下面每一种改进结构都在回答同一个问题：怎样让 I<sub>out</sub> 对 V<sub>out</sub> 更不敏感，同时少占电压余量。</p>
+  </div>
+  <div class="seg" id="mir-seg" role="group" aria-label="电流镜结构" style="margin-bottom:14px"></div>
+  <div class="lab">
+    <div class="col">
+      <div class="panel schem">
+        <div class="panel-t"><h3>原理图</h3><span class="hint" id="mir-sch-hint">圆点虚线表示电流，速度正比于电流大小</span></div>
+        <div class="scroll" id="mir-sch"></div>
+        <div class="key"><span><i style="background:var(--ok)"></i>饱和区</span><span><i style="background:var(--warn)"></i>线性区（掉出饱和）</span><span><i style="background:var(--bad)"></i>截止</span></div>
+      </div>
+      <div class="panel ctl" id="mir-ctl"></div>
+    </div>
+    <div class="col">
+      <div class="panel">
+        <div class="panel-t"><h3>I<sub>out</sub> – V<sub>out</sub> 特性（V<sub>DD</sub> = 1.8 V）</h3>
+          <label class="chk"><input type="checkbox" id="mir-zoom">纵轴放大到 I<sub>REF</sub> ±8%</label></div>
+        <div class="plot"><canvas id="mir-plot" aria-label="输出电流随输出电压变化曲线"></canvas></div>
+        <div class="legend" id="mir-leg"></div>
+      </div>
+      <dl class="stats" id="mir-stats"></dl>
+    </div>
+  </div>
+  <div class="notes" id="mir-notes"></div>
+</section>
+
+<!-- ============ 02 WIDLAR ============ -->
+<section class="ch" id="widlar">
+  <div class="ch-head">
+    <span class="ch-no">02</span>
+    <h2>Widlar 电流源：用电阻换面积</h2>
+    <p>想从 100 µA 的参考得到 2 µA？基本镜像需要 1:50 的器件尺寸比，面积和寄生电容都难以接受。Widlar 在输出管发射极串一个电阻 R<sub>E</sub>，利用 V<sub>BE</sub> 的对数特性，几 kΩ 就能得到很大的缩小比例。</p>
+  </div>
+  <div class="lab">
+    <div class="col">
+      <div class="panel schem"><div class="panel-t"><h3>原理图（NPN）</h3></div><div class="scroll" id="wid-sch"></div></div>
+      <div class="panel ctl" id="wid-ctl"></div>
+    </div>
+    <div class="col">
+      <div class="panel">
+        <div class="panel-t"><h3>I<sub>out</sub> 随 R<sub>E</sub> 变化</h3></div>
+        <div class="plot"><canvas id="wid-plot" aria-label="Widlar 输出电流随电阻变化"></canvas></div>
+        <div class="legend" id="wid-leg"></div>
+      </div>
+      <dl class="stats" id="wid-stats"></dl>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="tag">原理</span>
+      <p>两管基极相连，所以 V<sub>BE1</sub> = V<sub>BE2</sub> + I<sub>out</sub>R<sub>E</sub>。代入 V<sub>BE</sub> = V<sub>T</sub> ln(I<sub>C</sub>/I<sub>S</sub>)：</p>
+      <div class="eq">I<sub>out</sub>·R<sub>E</sub> = V<sub>T</sub>·ln(I<sub>REF</sub>/I<sub>out</sub>)</div>
+      <p>这是一个超越方程，页面用二分法求解。电流比每增加 10 倍，R<sub>E</sub> 上只需多 V<sub>T</sub>ln10 ≈ 60 mV。</p></div>
+    <div class="note"><span class="tag">附带的好处</span>
+      <p>R<sub>E</sub> 带来发射极负反馈，输出电阻升高：</p>
+      <div class="eq">R<sub>out</sub> ≈ r<sub>o</sub>(1 + g<sub>m</sub>R<sub>E</sub>)</div>
+      <p>I<sub>out</sub> 的表达式里含有 V<sub>T</sub> = kT/q，温度升高电流增大。拖动温度滑块观察这一点：这就是 PTAT 电流的雏形，第 04 章会用到。</p></div>
+    <div class="note"><span class="tag">MOS 版本</span>
+      <p>把 R<sub>S</sub> 接在 M2 源极，原理相同，但关系变成平方律：V<sub>GS1</sub> = V<sub>GS2</sub> + I<sub>out</sub>R<sub>S</sub>。弱反型区的 MOS 也具有指数特性，此时与双极版本几乎一样。</p></div>
+  </div>
+</section>
+
+<!-- ============ 03 SELF-BIAS ============ -->
+<section class="ch" id="selfbias">
+  <div class="ch-head">
+    <span class="ch-no">03</span>
+    <h2>自偏置电流源：与电源无关，但需要「推一把」</h2>
+    <p>前面的 I<sub>REF</sub> 从哪里来？用一个电阻接到电源，I<sub>REF</sub> ≈ (V<sub>DD</sub> − V<sub>GS</sub>)/R，电源波动 10%，电流也跟着波动。自偏置结构让电路自己决定电流：两个电流镜首尾相接，只有一个特定的电流能让环路自洽。</p>
+  </div>
+  <div class="lab">
+    <div class="col">
+      <div class="panel schem"><div class="panel-t"><h3>β 倍增器（恒定 g<sub>m</sub> 偏置）</h3><span class="hint">虚线部分为启动电路</span></div><div class="scroll" id="sb-sch"></div></div>
+      <div class="panel ctl" id="sb-ctl"></div>
+    </div>
+    <div class="col">
+      <div class="panel">
+        <div class="panel-t"><h3>① 两条约束曲线的交点 = 工作点</h3></div>
+        <div class="plot sm"><canvas id="sb-plot1" aria-label="两条栅压约束曲线"></canvas></div>
+        <div class="legend" id="sb-leg1"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-t"><h3>② 上电过程：环路迭代（蛛网图）</h3><span id="sb-status"></span></div>
+        <div class="plot sm"><canvas id="sb-plot2" aria-label="环路迭代蛛网图"></canvas></div>
+        <div class="legend" id="sb-leg2"></div>
+      </div>
+      <dl class="stats" id="sb-stats"></dl>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="tag">原理</span>
+      <p>PMOS 镜（P3、P4）强迫两条支路电流相等。M2 比 M1 宽 K 倍，并串有 R<sub>S</sub>：V<sub>GS1</sub> = V<sub>GS2</sub> + I·R<sub>S</sub>。图①中两条曲线只在一个非零电流处相交：</p>
+      <div class="eq">I = 2 / (μ<sub>n</sub>C<sub>ox</sub>(W/L)<sub>1</sub>R<sub>S</sub><sup>2</sup>) · (1 − 1/√K)<sup>2</sup></div>
+      <p>式中没有 V<sub>DD</sub>。</p></div>
+    <div class="note"><span class="tag">恒定 g<sub>m</sub></span>
+      <p>把上式代入 g<sub>m</sub> = √(2μC<sub>ox</sub>(W/L)I)：</p>
+      <div class="eq">g<sub>m1</sub> = 2(1 − 1/√K) / R<sub>S</sub></div>
+      <p>跨导只由电阻决定，与迁移率、温度、电源无关（只剩 R<sub>S</sub> 本身的温漂）。拖动 μC<sub>ox</sub>W/L 滑块：电流变了，g<sub>m</sub> 不变。运放的偏置常用它来稳定带宽。</p></div>
+    <div class="note"><span class="tag">简并点与启动</span>
+      <p>I = 0 也满足所有方程（图①两条曲线都从 V<sub>TH</sub> 出发）。理想模型中零点不稳定，但真实芯片里的漏电和亚阈值区的低环路增益会让零电流状态变成稳定点，如图②所示。没有启动电路时，电路可能永远停在零电流。</p>
+      <p>启动电路 M<sub>S</sub> 在上电时向环路注入电流，越过阈值 I<sub>u</sub> 后环路自己会走到正确的工作点，然后 M<sub>S</sub> 关断。</p></div>
+    <div class="note"><span class="tag">通向带隙</span>
+      <p>把 MOS 换成面积比为 n 的双极管：V<sub>BE1</sub> = V<sub>BE2</sub> + IR，于是</p>
+      <div class="eq">I = V<sub>T</sub>·ln n / R ∝ T</div>
+      <p>这是一个正比于绝对温度的 PTAT 电流，是下一章带隙基准的核心部件。</p></div>
+  </div>
+</section>
+
+<!-- ============ 04 BANDGAP PRINCIPLE ============ -->
+<section class="ch" id="bgp">
+  <div class="ch-head">
+    <span class="ch-no">04</span>
+    <h2>带隙原理：一负一正，相加抵消</h2>
+    <p>目标是一个几乎不随温度、电源、工艺变化的电压。我们手上有两个与温度相关、但行为非常可预测的量，把它们按合适的比例相加即可。</p>
+  </div>
+  <div class="sum" aria-live="polite">
+    <div class="term-c c1"><b>V<sub>BE</sub></b><span id="sum-1">−1.89 mV/K</span><em>CTAT：温度升高而下降</em></div>
+    <div class="op">+</div>
+    <div class="term-c c2"><b>K · V<sub>T</sub> ln n</b><span id="sum-2">+1.89 mV/K</span><em>PTAT：正比于绝对温度</em></div>
+    <div class="op">=</div>
+    <div class="term-c c3"><b>V<sub>REF</sub></b><span id="sum-3">0.00 mV/K</span><em>在 T<sub>z</sub> 处斜率为零</em></div>
+  </div>
+  <div class="lab">
+    <div class="col">
+      <div class="panel ctl" id="bgp-ctl"></div>
+      <div class="panel">
+        <div class="prose" style="margin:0">
+          <p><b style="color:var(--ctat)">V<sub>BE</sub> 为何下降？</b> V<sub>BE</sub> = V<sub>T</sub> ln(I<sub>C</sub>/I<sub>S</sub>)，而饱和电流 I<sub>S</sub> ∝ T<sup>η</sup>·e<sup>−E<sub>g</sub>/kT</sup> 随温度急剧增大，室温下 V<sub>BE</sub> 约以 −1.5 ～ −2 mV/K 下降。完整模型：</p>
+          <div class="eq">V<sub>BE</sub>(T) = V<sub>G0</sub> − (V<sub>G0</sub> − V<sub>BE0</sub>)·T/T<sub>0</sub> − (η − m)·V<sub>T</sub>·ln(T/T<sub>0</sub>)</div>
+          <p><b style="color:var(--ptat)">ΔV<sub>BE</sub> 为何上升？</b> 两只晶体管电流密度相差 n 倍：ΔV<sub>BE</sub> = V<sub>T</sub> ln n，温度系数 (k/q)·ln n ≈ 0.086·ln n mV/K，与 I<sub>S</sub> 无关，非常干净。</p>
+          <p><b style="color:var(--accent)">为何叫「带隙」？</b> 抵消后 V<sub>REF</sub> ≈ V<sub>G0</sub> + (η − m)V<sub>T</sub>，接近硅在 0 K 的外推带隙电压 1.205 V。</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="panel">
+        <div class="panel-t"><h3>三个分量随温度变化（−40 ～ 125 °C）</h3></div>
+        <div class="plot"><canvas id="bgp-plot1" aria-label="VBE、PTAT 项与 VREF 随温度变化"></canvas></div>
+        <div class="legend" id="bgp-leg1"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-t"><h3>放大看 V<sub>REF</sub>：残余的「弓形」</h3></div>
+        <div class="plot sm"><canvas id="bgp-plot2" aria-label="VREF 偏离 27 摄氏度值的毫伏数"></canvas></div>
+      </div>
+      <dl class="stats" id="bgp-stats"></dl>
+    </div>
+  </div>
+  <div class="notes">
+    <div class="note"><span class="tag">动手试试</span>
+      <ul>
+        <li>把 K 拖小：PTAT 不足，V<sub>REF</sub> 整体向右下倾斜；拖大则向右上倾斜。</li>
+        <li>点「求零温漂 K」，再移动 T<sub>z</sub>：弓形顶点跟着移动。把 T<sub>z</sub> 放在温度范围中间，box 法温漂最小。</li>
+        <li>增大 n：同样的 PTAT 斜率需要更小的 K，对运放失调更不敏感（见第 05 章）。</li>
+      </ul></div>
+    <div class="note"><span class="tag">残余曲率</span>
+      <p>V<sub>BE</sub> 中的 T·ln T 项是非线性的，一阶补偿只能让 V<sub>REF</sub> 在某一个温度处斜率为零，剩下一条开口向下的抛物线，典型 10 ～ 30 ppm/°C。把 η − m 调大，弓形变深。</p>
+      <p>二阶（曲率）补偿的思路：再加一个 ∝ T·ln T 的项去抵消，例如让某一支路的偏置电流与温度无关（m = 0），与 PTAT 偏置的 V<sub>BE</sub> 相减。</p></div>
+    <div class="note"><span class="tag">偏置电流的影响</span>
+      <p>m 是集电极电流的温度指数：PTAT 偏置时 m = 1，恒流偏置时 m = 0。切换上方的「偏置电流」看看：恒流偏置下 V<sub>BE</sub> 的曲率更大。</p></div>
+  </div>
+</section>
+
+<!-- ============ 05 BANDGAP STRUCTURES ============ -->
+<section class="ch" id="bgs">
+  <div class="ch-head">
+    <span class="ch-no">05</span>
+    <h2>带隙结构：同一个公式，四种实现</h2>
+    <p>所有一阶带隙都在实现 V<sub>REF</sub> = V<sub>BE</sub> + K·V<sub>T</sub>ln N，区别在于：如何产生 ΔV<sub>BE</sub>、如何放大它、用什么工艺、能在多低的电源下工作、对运放失调有多敏感。这里沿用第 04 章设置的 V<sub>BE0</sub>、η、m。</p>
+  </div>
+  <div class="seg" id="bgs-seg" role="group" aria-label="带隙结构" style="margin-bottom:14px"></div>
+  <div class="lab">
+    <div class="col">
+      <div class="panel schem"><div class="panel-t"><h3 id="bgs-sch-t">原理图</h3></div><div class="scroll" id="bgs-sch"></div></div>
+      <div class="panel ctl" id="bgs-ctl"></div>
+    </div>
+    <div class="col">
+      <div class="panel">
+        <div class="panel-t"><h3>V<sub>REF</sub> 随温度变化</h3><button class="btn" id="bgs-auto" type="button">调电阻到零温漂</button></div>
+        <div class="plot"><canvas id="bgs-plot" aria-label="带隙输出随温度变化"></canvas></div>
+        <div class="legend" id="bgs-leg"></div>
+      </div>
+      <dl class="stats" id="bgs-stats"></dl>
+    </div>
+  </div>
+  <div class="notes" id="bgs-notes"></div>
+  <div class="notes">
+    <div class="note"><span class="tag">误差从哪里来</span>
+      <ul>
+        <li><b>运放失调 V<sub>os</sub></b>：叠加在只有几十 mV 的 ΔV<sub>BE</sub> 上并被放大，通常是最大误差源。</li>
+        <li><b>电阻与 PNP 失配</b>：改变 K 和 n 的实际值；用共质心版图（如 3×3 阵列、n = 8）减小。</li>
+        <li><b>曲率</b>：V<sub>BE</sub> 的 T·ln T 项，需要二阶补偿。</li>
+        <li><b>封装应力、基极电流、β 随温度变化</b>：在 ppm 级别开始显现。</li>
+        <li><b>修调（trim）</b>：量产中通常在测试时调整电阻比，先校准 V<sub>REF</sub> 绝对值，同时也就校准了温漂。</li>
+      </ul></div>
+    <div class="note"><span class="tag">别忘了启动</span>
+      <p>这些带隙都是自偏置环路，和第 03 章一样存在零电流简并点。实际电路必须加启动电路，并在仿真中用缓慢上升的电源、各工艺角反复验证能否可靠启动。</p></div>
+    <div class="note"><span class="tag">电源抑制</span>
+      <p>PMOS 电流源的有限输出电阻会让电源纹波漏到 V<sub>REF</sub>。常用对策：PMOS 采用共源共栅（第 01 章）、用 LDO 先预稳压、在输出加 RC 滤波。</p></div>
+  </div>
+</section>
+
+<!-- ============ COMPARE ============ -->
+<section class="ch" id="compare">
+  <div class="ch-head">
+    <span class="ch-no">速查</span>
+    <h2>结构对比</h2>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>电流源结构</th><th>输出电阻</th><th>最小输出电压</th><th>器件</th><th>特点</th></tr></thead>
+    <tbody>
+      <tr><td>基本电流镜</td><td class="m">r<sub>o</sub></td><td class="m">V<sub>ov</sub></td><td>2 管</td><td>最简单；精度受 λ 和 V<sub>DS</sub> 失配限制</td></tr>
+      <tr><td>共源共栅</td><td class="m">g<sub>m</sub>r<sub>o</sub><sup>2</sup></td><td class="m">V<sub>TH</sub> + 2V<sub>ov</sub></td><td>4 管</td><td>R<sub>out</sub> 高，多占一个 V<sub>TH</sub></td></tr>
+      <tr><td>宽摆幅共源共栅</td><td class="m">g<sub>m</sub>r<sub>o</sub><sup>2</sup></td><td class="m">2V<sub>ov</sub></td><td>4 管 + 偏置</td><td>低压设计首选</td></tr>
+      <tr><td>Wilson</td><td class="m">≈ g<sub>m</sub>r<sub>o</sub><sup>2</sup>/2</td><td class="m">V<sub>TH</sub> + 2V<sub>ov</sub></td><td>3 管（改进型 4 管）</td><td>负反馈；漏压不等带来系统误差</td></tr>
+      <tr><td>增益增强共源共栅</td><td class="m">(A+1)g<sub>m</sub>r<sub>o</sub><sup>2</sup></td><td class="m">≈ 2V<sub>ov</sub> + 裕量</td><td>4 管 + 放大器</td><td>R<sub>out</sub> 极高；注意零极点对与稳定性</td></tr>
+      <tr><td>Widlar</td><td class="m">r<sub>o</sub>(1 + g<sub>m</sub>R<sub>E</sub>)</td><td class="m">V<sub>CE,sat</sub> + IR<sub>E</sub></td><td>2 管 + R</td><td>小电流、小面积；I<sub>out</sub> 偏 PTAT</td></tr>
+      <tr><td>β 倍增器（自偏置）</td><td class="m">—</td><td class="m">—</td><td>4 管 + R + 启动</td><td>与 V<sub>DD</sub> 无关；恒定 g<sub>m</sub>；必须有启动电路</td></tr>
+    </tbody></table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>带隙结构</th><th>V<sub>REF</sub></th><th>最低 V<sub>DD</sub></th><th>失调敏感度</th><th>工艺</th></tr></thead>
+    <tbody>
+      <tr><td>Widlar 带隙</td><td class="m">≈ 1.25 V</td><td class="m">V<sub>REF</sub> + V<sub>CE,sat</sub></td><td>无运放</td><td>双极</td></tr>
+      <tr><td>Brokaw</td><td class="m">≈ 1.25 V（可分压放大）</td><td class="m">≈ V<sub>REF</sub> + 0.3 V</td><td>低：被 g<sub>m</sub>R<sub>C</sub> 衰减</td><td>双极 / BiCMOS</td></tr>
+      <tr><td>CMOS 运放型</td><td class="m">≈ 1.2 V</td><td class="m">V<sub>REF</sub> + |V<sub>DS,sat</sub>|</td><td>高：×R<sub>2</sub>/R<sub>1</sub></td><td>标准 CMOS（衬底 PNP）</td></tr>
+      <tr><td>Banba 电流模</td><td class="m">任意，可 &lt; 1 V</td><td class="m">V<sub>BE</sub> + |V<sub>DS,sat</sub>| ≈ 1 V</td><td>高：×(R<sub>3</sub>/R<sub>2</sub>)(1 + R<sub>2</sub>/R<sub>1</sub>)</td><td>标准 CMOS</td></tr>
+    </tbody></table></div>
+</section>
+
+<footer>
+  <p><b>模型说明。</b>MOSFET：平方律 + 沟道长度调制，V<sub>TH</sub> = 0.45 V，忽略体效应与亚阈值导电。BJT：I<sub>C</sub> = I<sub>S</sub>e<sup>V<sub>BE</sub>/V<sub>T</sub></sup>，忽略基极电流与 Early 效应（Widlar 输出电阻估算取 V<sub>A</sub> = 50 V）。V<sub>BE</sub>(T) 采用 Tsividis 形式，V<sub>G0</sub> = 1.205 V，T<sub>0</sub> = 300.15 K。运放视为理想，仅保留输入失调。</p>
+  <p>这些简化足以看清每种结构的原理和趋势，具体数值请以 SPICE 与工艺模型为准。参考：Razavi《模拟 CMOS 集成电路设计》第 5、12 章；Gray & Meyer《Analysis and Design of Analog Integrated Circuits》第 4 章；Brokaw, JSSC 1974；Banba, JSSC 1999。</p>
+</footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ---------------- constants & helpers ---------------- */
+const kq=8.617333e-5, VDD=1.8, VTN=0.45, T0=300.15, VG0=1.205;
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rootStyle=()=>getComputedStyle(document.documentElement);
+function bisect(f,a,b,it){
+  it=it||64; let fa=f(a), fb=f(b);
+  if(fa===0) return a; if(fb===0) return b;
+  if((fa>0)===(fb>0)) return Math.abs(fa)<Math.abs(fb)?a:b;
+  for(let i=0;i<it;i++){ const m=0.5*(a+b), fm=f(m); if(fm===0) return m; if((fm>0)===(fa>0)){a=m;fa=fm;} else b=m; }
+  return 0.5*(a+b);
+}
+function si(v,unit,d){
+  d=d||3; if(!isFinite(v)) return '∞ '+unit; if(v===0) return '0 '+unit;
+  const a=Math.abs(v), P=[[1e9,'G'],[1e6,'M'],[1e3,'k'],[1,''],[1e-3,'m'],[1e-6,'µ'],[1e-9,'n'],[1e-12,'p']];
+  for(const [f,p] of P){ if(a>=f*0.9995) return (v/f).toPrecision(d)+' '+p+unit; }
+  return (v/1e-12).toPrecision(d)+' p'+unit;
+}
+const kohm=v=>(v/1e3).toFixed(1)+' kΩ';
+function setT(pre,id,txt,cls){ const el=document.getElementById(pre+'-'+id); if(!el) return; el.textContent=txt; if(cls) el.setAttribute('class',cls); }
+function stats(el,rows){
+  el.innerHTML=rows.map(r=>`<div class="stat${r.hl?' hl':''}"><dt>${r.k}</dt><dd>${r.v}${r.s?`<small>${r.s}</small>`:''}</dd></div>`).join('');
+}
+
+/* ---------------- device models ---------------- */
+function idn(vgs,vds,p){
+  const vov=vgs-p.vt; if(vov<=0) return 0;
+  if(vds<=0) return p.beta*vov*vds;
+  const cl=1+p.lam*vds;
+  return vds<vov ? p.beta*(vov*vds-0.5*vds*vds)*cl : 0.5*p.beta*vov*vov*cl;
+}
+function region(vgs,vds,vt){ const vov=vgs-vt; if(vov<=0) return 'off'; return vds>=vov-1e-9?'sat':'tri'; }
+function diodeVgs(I,p){ return bisect(v=>idn(v,v,p)-I,p.vt,p.vt+3); }
+function casNode(vgB,vgTop,vout,p){
+  if(vout<=0) return {vx:0,I:0};
+  const vx=bisect(x=>idn(vgB,x,p)-idn(vgTop(x)-x,vout-x,p),0,vout);
+  return {vx,I:idn(vgB,vx,p)};
+}
+function vbe(T,P){ return VG0-(VG0-P.VBE0)*T/T0-(P.eta-P.m)*kq*T*Math.log(T/T0); }
+function dvbe(T,P){ return -(VG0-P.VBE0)/T0-(P.eta-P.m)*kq*(Math.log(T/T0)+1); }
+function kAuto(lnN,P,Tz){ return -dvbe(Tz,P)/(kq*lnN); }
+const TK=c=>c+273.15;
+const TEMPS=[]; for(let c=-40;c<=125;c+=1) TEMPS.push(c);
+function tcOf(fn){ // fn(TK) -> V ; returns {pts,min,max,tc,v27}
+  let mn=Infinity,mx=-Infinity,sum=0; const pts=TEMPS.map(c=>{const v=fn(TK(c)); mn=Math.min(mn,v); mx=Math.max(mx,v); sum+=v; return [c,v];});
+  const avg=sum/pts.length; return {pts,min:mn,max:mx,avg,tc:(mx-mn)/(Math.abs(avg)*165)*1e6,v27:fn(TK(27))};
+}
+
+/* ---------------- schematic builder ---------------- */
+function tx(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/_\{([^}]*)\}/g,'<tspan baseline-shift="sub" font-size="76%">$1</tspan>'); }
+class Sch{
+  constructor(w,h,pre,label){ this.w=w; this.h=h; this.pre=pre; this.label=label; this.o=[]; this.f=[]; }
+  a(s){ this.o.push(s); return this; }
+  pts(p){ return p.map(q=>q[0]+','+q[1]).join(' '); }
+  wire(...p){ return this.a(`<polyline class="w" points="${this.pts(p)}"/>`); }
+  d(d,c){ return this.a(`<path class="${c||'w'}" d="${d}"/>`); }
+  dot(x,y){ return this.a(`<circle class="dot" cx="${x}" cy="${y}" r="3"/>`); }
+  term(x,y){ return this.a(`<circle class="term" cx="${x}" cy="${y}" r="4"/>`); }
+  head(tx_,ty,ux,uy,s){ s=s||7; const px=-uy,py=ux,bx=tx_-ux*s,by=ty-uy*s,w=s*0.45;
+    return this.a(`<polygon class="ah" points="${tx_},${ty} ${bx+px*w},${by+py*w} ${bx-px*w},${by-py*w}"/>`); }
+  text(x,y,s,o){ o=o||{}; const id=o.id?` id="${this.pre}-${o.id}"`:''; return this.a(`<text x="${x}" y="${y}" text-anchor="${o.anchor||'start'}" class="${o.cls||''}"${id}>${tx(s)}</text>`); }
+  rail(x1,x2,y,lab){ this.d(`M${x1},${y}H${x2}`,'w rail'); if(lab) this.text(x1-6,y+4,lab,{anchor:'end'}); return this; }
+  gsym(x,y){ return this.d(`M${x},${y}v7M${x-10},${y+7}h20M${x-6},${y+11}h12M${x-2},${y+15}h4`); }
+  gnd(x1,x2,y){ this.d(`M${x1},${y}H${x2}`,'w rail'); return this.gsym(x1,y); }
+  mos(x,y,o){
+    const d=o.d||1, cx=x-14*d, gx=x-20*d;
+    this.d(`M${x},${y-30}V${y-11}H${cx}M${cx},${y+11}H${x}V${y+30}`);
+    this.d(`M${cx},${y-17}V${y+17}`,'w thick');
+    this.d(`M${gx},${y-14}V${y+14}M${gx},${y}H${x-30*d}`);
+    if(o.t==='p') this.head(x-11*d,y-11,-d,0,6); else this.head(x-3*d,y+11,d,0,6);
+    const lx=x+8*d, an=d>0?'start':'end';
+    if(o.name) this.text(lx,y+1,o.name,{anchor:an,cls:'nm'});
+    if(o.sub) this.text(lx,y+15,o.sub,{anchor:an,cls:'sub'});
+    if(o.id) this.text(lx,y+15,'',{anchor:an,cls:'rg',id:o.id+'-r'});
+    return this;
+  }
+  bjt(x,y,o){
+    const d=o.d||1, bx=x-14*d;
+    this.d(`M${bx},${y-13}V${y+13}`,'w thick');
+    this.d(`M${bx},${y}H${x-30*d}`);
+    this.d(`M${bx},${y-6}L${x},${y-16}V${y-30}M${bx},${y+6}L${x},${y+16}V${y+30}`);
+    const L=Math.hypot(14,10);
+    if(o.t==='pnp'){ const ux=(bx-x)/L, uy=10/L; this.head(x+(bx-x)*0.72,y-16+10*0.72,ux,uy,7); }
+    else { const ux=(x-bx)/L, uy=10/L; this.head(bx+(x-bx)*0.9,y+6+10*0.9,ux,uy,7); }
+    const lx=x+8*d, an=d>0?'start':'end';
+    if(o.name) this.text(lx,y+1,o.name,{anchor:an,cls:'nm'});
+    if(o.area) this.text(lx,y+15,o.area,{anchor:an,cls:'sub'});
+    return this;
+  }
+  res(x,y1,y2,o){
+    o=o||{}; const L=Math.min(32,y2-y1-8), m=(y1+y2)/2, t=m-L/2; let p=`M${x},${y1}V${t}`; const k=[1,-1,1,-1,1,-1];
+    for(let i=0;i<6;i++) p+=`L${x+6*k[i]},${t+(2*i+1)*L/12}`;
+    p+=`L${x},${t+L}V${y2}`; this.d(p);
+    const s=o.side==='left'?-1:1, an=s>0?'start':'end';
+    if(o.name) this.text(x+12*s,m-3,o.name,{anchor:an,cls:'nm'});
+    if(o.id) this.text(x+12*s,m+15,'',{anchor:an,cls:'val',id:o.id});
+    return this;
+  }
+  isrc(x,y,o){
+    this.a(`<circle class="w" cx="${x}" cy="${y}" r="12"/>`); this.d(`M${x},${y-7}V${y+3}`); this.head(x,y+8,0,1,6);
+    if(o&&o.name) this.text(x+18,y+4,o.name,{cls:'nm'}); return this;
+  }
+  amp(x,y,dir,labs){
+    const M=(u,v)=>dir==='right'?[x+u,y+v]:dir==='left'?[x-u,y+v]:dir==='up'?[x+v,y-u]:[x+v,y+u];
+    this.a(`<polygon class="w amp" points="${this.pts([M(0,-30),M(0,30),M(50,0)])}"/>`);
+    const a=M(10,-15), b=M(10,15);
+    this.text(a[0],a[1]+4,labs[0],{anchor:'middle',cls:'nm'}); this.text(b[0],b[1]+4,labs[1],{anchor:'middle',cls:'nm'});
+    return this;
+  }
+  flow(p,c){ this.f.push(`<polyline class="flow ${c}" points="${this.pts(p)}"/>`); return this; }
+  svg(){ return `<svg class="sch" viewBox="0 0 ${this.w} ${this.h}" role="img" aria-label="${this.label}" style="max-width:${this.w*1.35}px">${this.o.join('')}${this.f.join('')}</svg>`; }
+}
+function setFlow(svgHost,cls,I,Inom){
+  svgHost.querySelectorAll('.flow.'+cls).forEach(el=>{
+    if(!(I>Inom*0.02)){ el.classList.add('stop'); return; }
+    el.classList.remove('stop'); el.style.setProperty('--dur',clamp(0.9*Inom/I,0.35,5).toFixed(2)+'s');
+  });
+}
+
+/* ---------------- canvas plot ---------------- */
+const plots=[];
+function hexA(h,a){ h=h.trim(); if(h[0]!=='#'||h.length<7) return h; const n=parseInt(h.slice(1,7),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
+function niceTicks(a,b,n){
+  const span=b-a; if(!(span>0)) return [a]; const s0=span/n, p=Math.pow(10,Math.floor(Math.log10(s0))), e=s0/p;
+  const st=(e<1.5?1:e<3?2:e<7?5:10)*p, out=[];
+  for(let v=Math.ceil(a/st-1e-9)*st; v<=b+st*1e-9; v+=st) out.push(Math.abs(v)<st*1e-9?0:+v.toPrecision(12));
+  return out;
+}
+function interp(pts,x){
+  if(!pts.length||x<pts[0][0]||x>pts[pts.length-1][0]) return null;
+  let lo=0,hi=pts.length-1; while(hi-lo>1){ const m=(lo+hi)>>1; if(pts[m][0]<=x) lo=m; else hi=m; }
+  const [x0,y0]=pts[lo],[x1,y1]=pts[hi]; return x1===x0?y0:y0+(y1-y0)*(x-x0)/(x1-x0);
+}
+class Plot{
+  constructor(canvas,legendEl){
+    this.c=canvas; this.g=canvas.getContext('2d'); this.leg=legendEl; this.sp=null; this.hx=null; plots.push(this);
+    new ResizeObserver(()=>this.draw()).observe(canvas);
+    canvas.addEventListener('pointermove',e=>{ const r=canvas.getBoundingClientRect(); this.hx=e.clientX-r.left; this.draw(); });
+    canvas.addEventListener('pointerleave',()=>{ this.hx=null; this.draw(); });
+  }
+  set(sp){
+    this.sp=sp; this.draw();
+    if(this.leg){ this.leg.innerHTML=(sp.series||[]).filter(s=>s&&s.label&&!s.nolegend).map(s=>`<span style="color:var(${s.color})"><i class="${s.dash?'dash':''}"></i><span style="color:var(--ink-2)">${s.label}</span></span>`).join('')+(sp.legendExtra||''); }
+  }
+  draw(){
+    const sp=this.sp; if(!sp) return; const c=this.c, W=c.clientWidth, H=c.clientHeight; if(!W||!H) return;
+    const dpr=window.devicePixelRatio||1;
+    if(c.width!==Math.round(W*dpr)||c.height!==Math.round(H*dpr)){ c.width=Math.round(W*dpr); c.height=Math.round(H*dpr); }
+    const g=this.g, cs=rootStyle(), C=n=>cs.getPropertyValue(n).trim();
+    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+    const ink=C('--ink'), ink2=C('--ink-2'), grid=C('--grid'), line=C('--line'), surf=C('--surface');
+    const mono='"JetBrains Mono",ui-monospace,monospace';
+    const m={l:sp.ml||54,r:14,t:12,b:38}, pw=W-m.l-m.r, ph=H-m.t-m.b;
+    const [x0,x1]=sp.x,[y0,y1]=sp.y;
+    const X=v=>m.l+(v-x0)/(x1-x0)*pw, Y=v=>m.t+(1-(v-y0)/(y1-y0))*ph;
+    (sp.shade||[]).forEach(s=>{ const a=X(clamp(s.x0,x0,x1)), b=X(clamp(s.x1,x0,x1)); g.fillStyle=hexA(C(s.color),s.alpha||0.1); g.fillRect(a,m.t,b-a,ph); });
+    g.font=`11px ${mono}`; g.lineWidth=1;
+    const xt=niceTicks(x0,x1,sp.xn||6), yt=niceTicks(y0,y1,sp.yn||5);
+    g.strokeStyle=grid; g.beginPath();
+    xt.forEach(v=>{ const px=Math.round(X(v))+0.5; g.moveTo(px,m.t); g.lineTo(px,m.t+ph); });
+    yt.forEach(v=>{ const py=Math.round(Y(v))+0.5; g.moveTo(m.l,py); g.lineTo(m.l+pw,py); });
+    g.stroke();
+    g.strokeStyle=line; g.strokeRect(m.l+0.5,m.t+0.5,pw,ph);
+    g.fillStyle=ink2; g.textAlign='center'; g.textBaseline='top';
+    const xf=sp.xfmt||(v=>String(v)), yf=sp.yfmt||(v=>String(v));
+    xt.forEach(v=>g.fillText(xf(v),X(v),m.t+ph+5));
+    g.textAlign='right'; g.textBaseline='middle'; yt.forEach(v=>g.fillText(yf(v),m.l-6,Y(v)));
+    g.textAlign='center'; g.textBaseline='bottom'; g.fillText(sp.xlabel||'',m.l+pw/2,H-2);
+    g.save(); g.translate(11,m.t+ph/2); g.rotate(-Math.PI/2); g.textBaseline='middle'; g.fillText(sp.ylabel||'',0,0); g.restore();
+    g.save(); g.beginPath(); g.rect(m.l,m.t,pw,ph); g.clip();
+    (sp.hlines||[]).forEach(h=>{ g.strokeStyle=C(h.color); g.setLineDash(h.dash||[4,4]); g.lineWidth=1.2; g.beginPath(); g.moveTo(m.l,Y(h.y)); g.lineTo(m.l+pw,Y(h.y)); g.stroke(); g.setLineDash([]);
+      if(h.label){ g.fillStyle=C(h.color); g.textAlign='right'; g.textBaseline=h.below?'top':'bottom'; g.fillText(h.label,m.l+pw-4,Y(h.y)+(h.below?3:-2)); } });
+    (sp.vlines||[]).forEach(h=>{ g.strokeStyle=C(h.color); g.setLineDash(h.dash||[4,4]); g.lineWidth=1.2; g.beginPath(); g.moveTo(X(h.x),m.t); g.lineTo(X(h.x),m.t+ph); g.stroke(); g.setLineDash([]);
+      if(h.label){ g.fillStyle=C(h.color); g.textAlign=h.align||'left'; g.textBaseline='top'; g.fillText(h.label,X(h.x)+(h.align==='right'?-4:4),m.t+4); } });
+    (sp.series||[]).forEach(s=>{ if(!s||!s.pts.length) return; g.strokeStyle=C(s.color); g.lineWidth=s.width||2; g.setLineDash(s.dash||[]); g.lineJoin='round';
+      g.beginPath(); s.pts.forEach((p,i)=>{ const px=X(p[0]),py=Y(p[1]); i?g.lineTo(px,py):g.moveTo(px,py); }); g.stroke(); g.setLineDash([]); });
+    if(sp.cobweb&&sp.cobweb.length>1){ g.strokeStyle=C(sp.cobwebColor||'--ptat'); g.lineWidth=1.6; g.beginPath(); sp.cobweb.forEach((p,i)=>{ const px=X(p[0]),py=Y(p[1]); i?g.lineTo(px,py):g.moveTo(px,py); }); g.stroke(); }
+    g.restore();
+    (sp.points||[]).forEach(p=>{ const px=X(p.x),py=Y(p.y); if(px<m.l-6||px>m.l+pw+6||py<m.t-6||py>m.t+ph+6) return;
+      g.beginPath(); g.arc(px,py,p.r||5,0,7); g.fillStyle=p.hollow?surf:C(p.color); g.fill(); g.lineWidth=2; g.strokeStyle=C(p.color); g.stroke();
+      if(p.label){ g.fillStyle=C(p.color); g.font=`600 11px ${mono}`; g.textAlign=p.align||'left'; g.textBaseline='bottom'; g.fillText(p.label,px+(p.align==='right'?-8:8),py-6); g.font=`11px ${mono}`; } });
+    if(this.hx!=null&&this.hx>=m.l&&this.hx<=m.l+pw){
+      const xv=x0+(this.hx-m.l)/pw*(x1-x0), px=X(xv);
+      g.strokeStyle=ink2; g.setLineDash([2,3]); g.lineWidth=1; g.beginPath(); g.moveTo(px,m.t); g.lineTo(px,m.t+ph); g.stroke(); g.setLineDash([]);
+      const rows=[{t:(sp.hname||'x')+' = '+(sp.hx?sp.hx(xv):xv.toFixed(3)),c:ink}];
+      (sp.series||[]).forEach(s=>{ if(!s||!s.label||s.nohover) return; const yv=interp(s.pts,xv); if(yv==null) return;
+        const py=Y(yv); if(py>=m.t&&py<=m.t+ph){ g.beginPath(); g.arc(px,py,3.5,0,7); g.fillStyle=C(s.color); g.fill(); }
+        rows.push({t:s.label.replace(/<[^>]+>/g,'')+': '+(sp.hy?sp.hy(yv):yv.toPrecision(4)),c:C(s.color)}); });
+      g.font=`11px ${mono}`; const bw=Math.max(...rows.map(r=>g.measureText(r.t).width))+16, bh=rows.length*16+8;
+      let bx=px+10; if(bx+bw>m.l+pw) bx=px-10-bw; bx=Math.max(m.l+2,bx); const by=m.t+6;
+      g.fillStyle=hexA(surf,0.94); g.strokeStyle=line; g.beginPath(); g.rect(bx,by,bw,bh); g.fill(); g.stroke();
+      g.textAlign='left'; g.textBaseline='top'; rows.forEach((r,i)=>{ g.fillStyle=r.c; g.fillText(r.t,bx+8,by+5+i*16); });
+    }
+  }
+}
+const redrawAll=()=>plots.forEach(p=>p.draw());
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(redrawAll);
+
+/* ---------------- controls ---------------- */
+function mkSlider(parent,c){
+  const w=document.createElement('label'); w.className='sl'; w.htmlFor=c.id;
+  w.innerHTML=`<span>${c.label}</span><output id="${c.id}-o"></output><input type="range" id="${c.id}">`;
+  const inp=w.querySelector('input'), out=w.querySelector('output');
+  if(c.log){ inp.min=0; inp.max=1000; inp.step=1; } else { inp.min=c.min; inp.max=c.max; inp.step=c.step; }
+  const toV=r=>c.log?c.min*Math.pow(c.max/c.min,r/1000):+r;
+  const toR=v=>c.log?Math.round(1000*Math.log(v/c.min)/Math.log(c.max/c.min)):v;
+  let val=c.value;
+  const api={get:()=>val,set(v,silent){ val=v; inp.value=toR(v); out.textContent=c.fmt(v); if(!silent) c.on(v); }};
+  inp.addEventListener('input',()=>{ val=toV(+inp.value); if(c.round) val=c.round(val); out.textContent=c.fmt(val); c.on(val); });
+  api.set(c.value,true); parent.appendChild(w); return api;
+}
+function mkSeg(el,items,cur,on){
+  el.innerHTML=items.map(([k,n])=>`<button type="button" data-k="${k}" aria-pressed="${k===cur}">${n}</button>`).join('');
+  el.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); on(b.dataset.k); });
+}
+
+/* =================================================================
+   01 MIRRORS
+   ================================================================= */
+const MIR={topo:'simple',Iref:50e-6,vov:0.2,lam:0.1,A:30,vout:1.0,zoom:false};
+function mirModel(topo,S){
+  const p={beta:2*S.Iref/(S.vov*S.vov),vt:VTN,lam:S.lam};
+  const vg=diodeVgs(S.Iref,p), gm=2*S.Iref/S.vov, ro=1/(S.lam*S.Iref);
+  if(topo==='simple') return {vg,vmin:S.vov,rA:ro,rF:'r<sub>o2</sub>',solve(v){ return {I:idn(vg,v,p),devs:{M1:[vg,vg],M2:[vg,v]},nodes:{}}; }};
+  if(topo==='cascode'){ const vb=2*vg; return {vg,vb,vmin:vg+S.vov,rA:gm*ro*ro,rF:'g<sub>m4</sub>r<sub>o4</sub>r<sub>o2</sub>',solve(v){ const r=casNode(vg,()=>vb,v,p); return {I:r.I,devs:{M1:[vg,vg],M3:[vg,vg],M2:[vg,r.vx],M4:[vb-r.vx,v-r.vx]},nodes:{vx:r.vx}}; }}; }
+  if(topo==='wide'){
+    const vb=vg+S.vov+0.05;
+    const VG=bisect(G=>casNode(G,()=>vb,G,p).I-S.Iref,VTN+1e-3,VDD); const inp=casNode(VG,()=>vb,VG,p);
+    return {vg:VG,vb,vmin:2*S.vov+0.05,rA:gm*ro*ro,rF:'g<sub>m4</sub>r<sub>o4</sub>r<sub>o2</sub>',solve(v){ const r=casNode(VG,()=>vb,v,p); return {I:r.I,devs:{M1:[VG,inp.vx],M3:[vb-inp.vx,VG-inp.vx],M2:[VG,r.vx],M4:[vb-r.vx,v-r.vx]},nodes:{vx:r.vx}}; }};
+  }
+  if(topo==='wilson'){
+    const vaOf=vx=>idn(vx,VDD,p)<S.Iref?VDD:bisect(va=>idn(vx,va,p)-S.Iref,0,VDD);
+    return {vg,vmin:vg+S.vov,rA:gm*ro*ro/2,rF:'g<sub>m3</sub>r<sub>o3</sub>r<sub>o2</sub>/2',solve(v){
+      const vx=bisect(x=>idn(vaOf(x)-x,v-x,p)-idn(x,x,p),VTN,VDD), VA=vaOf(vx);
+      return {I:idn(vx,vx,p),devs:{M1:[vx,VA],M2:[vx,vx],M3:[VA-vx,v-vx]},nodes:{vx,va:VA,clip:VA>=VDD-1e-6}}; }};
+  }
+  // regulated cascode
+  const vset=S.vov+0.1, vb0=vset+vg, top=x=>clamp(vb0+S.A*(vset-x),0,VDD);
+  return {vg,vset,vmin:vset+S.vov,rA:(S.A+1)*gm*ro*ro,rF:'(A+1)·g<sub>m4</sub>r<sub>o4</sub>r<sub>o2</sub>',solve(v){ const r=casNode(vg,top,v,p); return {I:r.I,devs:{M1:[vg,vg],M2:[vg,r.vx],M4:[top(r.vx)-r.vx,v-r.vx]},nodes:{vx:r.vx}}; }};
+}
+function schMirror(topo){
+  const s=new Sch(400,300,'mir','电流镜原理图'); s.rail(60,360,24,'V_{DD}'); s.gnd(60,360,276);
+  if(topo==='simple'){
+    s.wire([110,24],[110,58]); s.isrc(110,70,{name:'I_{REF}'}); s.wire([110,82],[110,150]);
+    s.mos(110,180,{d:-1,name:'M1',id:'M1'}); s.wire([110,210],[110,276]);
+    s.wire([110,118],[170,118],[170,180]); s.dot(110,118); s.dot(170,180);
+    s.wire([140,180],[260,180]); s.text(215,172,'',{anchor:'middle',cls:'val',id:'vg'});
+    s.mos(290,180,{d:1,name:'M2',id:'M2'}); s.wire([290,210],[290,276]);
+    s.wire([290,150],[290,62]); s.term(290,58); s.text(300,52,'',{cls:'nm',id:'vo'}); s.text(298,106,'',{cls:'val',id:'io'});
+    s.flow([[110,84],[110,148]],'f-ref'); s.flow([[290,64],[290,148]],'f-out');
+  } else if(topo==='cascode'||topo==='wide'){
+    s.wire([110,24],[110,40]); s.isrc(110,52,{name:'I_{REF}'}); s.wire([110,64],[110,90]);
+    s.mos(110,120,{d:-1,name:'M3',id:'M3'}); s.wire([110,150],[110,180]);
+    s.mos(110,210,{d:-1,name:'M1',id:'M1'}); s.wire([110,240],[110,276]);
+    s.wire([140,120],[260,120]); s.wire([140,210],[260,210]);
+    if(topo==='cascode'){
+      s.wire([110,76],[170,76],[170,120]); s.dot(110,76); s.dot(170,120);
+      s.wire([110,165],[180,165],[180,210]); s.dot(110,165); s.dot(180,210);
+      s.text(220,112,'',{anchor:'middle',cls:'val',id:'vb'});
+    } else {
+      s.d('M110,76H170V114A6,6 0 0 1 170,126V210'); s.dot(110,76); s.dot(170,210);
+      s.wire([215,120],[215,98]); s.dot(215,120); s.term(215,94); s.text(224,90,'',{cls:'val',id:'vb'});
+    }
+    s.text(220,202,'',{anchor:'middle',cls:'val',id:'vg'});
+    s.mos(290,120,{d:1,name:'M4',id:'M4'}); s.mos(290,210,{d:1,name:'M2',id:'M2'});
+    s.wire([290,150],[290,180]); s.dot(290,165); s.text(300,169,'',{cls:'val',id:'vx'});
+    s.wire([290,240],[290,276]); s.wire([290,90],[290,62]); s.term(290,58); s.text(300,52,'',{cls:'nm',id:'vo'}); s.text(298,80,'',{cls:'val',id:'io'});
+    s.flow([[110,66],[110,88]],'f-ref'); s.flow([[110,152],[110,178]],'f-ref'); s.flow([[290,64],[290,88]],'f-out'); s.flow([[290,152],[290,178]],'f-out');
+  } else if(topo==='wilson'){
+    s.wire([110,24],[110,40]); s.isrc(110,52,{name:'I_{REF}'}); s.wire([110,64],[110,180]); s.dot(110,120);
+    s.text(102,112,'',{anchor:'end',cls:'val',id:'va'});
+    s.mos(110,210,{d:-1,name:'M1',id:'M1'}); s.wire([110,240],[110,276]);
+    s.wire([110,120],[260,120]);
+    s.mos(290,120,{d:1,name:'M3',id:'M3'}); s.mos(290,210,{d:1,name:'M2',id:'M2'});
+    s.wire([290,150],[290,180]); s.wire([290,165],[220,165],[220,210]); s.dot(290,165); s.dot(220,210); s.text(300,169,'',{cls:'val',id:'vx'});
+    s.wire([140,210],[260,210]); s.text(180,202,'',{anchor:'middle',cls:'val',id:'vg'});
+    s.wire([290,240],[290,276]); s.wire([290,90],[290,62]); s.term(290,58); s.text(300,52,'',{cls:'nm',id:'vo'}); s.text(298,80,'',{cls:'val',id:'io'});
+    s.flow([[110,66],[110,110]],'f-ref'); s.flow([[290,64],[290,88]],'f-out'); s.flow([[290,152],[290,178]],'f-out');
+  } else {
+    s.wire([110,24],[110,48]); s.isrc(110,60,{name:'I_{REF}'}); s.wire([110,72],[110,180]);
+    s.mos(110,210,{d:-1,name:'M1',id:'M1'}); s.wire([110,240],[110,276]);
+    s.wire([110,150],[170,150],[170,210]); s.dot(110,150); s.dot(170,210);
+    s.wire([140,210],[230,210]); s.text(200,202,'',{anchor:'middle',cls:'val',id:'vg'});
+    s.mos(260,210,{d:1,name:'M2',id:'M2'}); s.wire([260,240],[260,276]);
+    s.mos(260,120,{d:-1,name:'M4',id:'M4'}); s.wire([260,150],[260,180]);
+    s.amp(340,120,'left',['+','−']); s.text(314,124,'A',{anchor:'middle',cls:'nm'});
+    s.wire([260,165],[360,165],[360,135],[340,135]); s.dot(260,165); s.text(268,159,'',{cls:'val',id:'vx'});
+    s.wire([340,105],[360,105],[360,84]); s.term(360,80); s.text(360,70,'V_{set}',{anchor:'middle',cls:'nm'});
+    s.wire([260,90],[260,62]); s.term(260,58); s.text(270,52,'',{cls:'nm',id:'vo'}); s.text(268,80,'',{cls:'val',id:'io'});
+    s.flow([[110,74],[110,148]],'f-ref'); s.flow([[260,64],[260,88]],'f-out'); s.flow([[260,152],[260,178]],'f-out');
+  }
+  return s.svg();
+}
+const MIR_TOPOS=[['simple','基本电流镜'],['cascode','共源共栅'],['wide','宽摆幅共源共栅'],['wilson','Wilson'],['reg','增益增强共源共栅']];
+const MIR_NOTES={
+ simple:`<div class="note"><span class="tag">原理</span><p>M1 栅漏短接（二极管连接），I<sub>REF</sub> 迫使它建立恰好能流过 I<sub>REF</sub> 的 V<sub>GS</sub>。M2 共享这个 V<sub>GS</sub>，在饱和区就流过相同电流，按 (W/L)<sub>2</sub>/(W/L)<sub>1</sub> 缩放。</p></div>
+  <div class="note"><span class="tag">关键公式</span><div class="eq">I<sub>out</sub> = I<sub>REF</sub>·(1+λV<sub>out</sub>)/(1+λV<sub>GS1</sub>)</div><div class="eq">R<sub>out</sub> = r<sub>o2</sub> ≈ 1/(λI<sub>out</sub>)</div><div class="eq">V<sub>out,min</sub> = V<sub>ov</sub></div></div>
+  <div class="note"><span class="tag">观察</span><p>拖动 V<sub>out</sub>：只有当 V<sub>out</sub> = V<sub>GS1</sub> 时复制才完全准确，因为此时两管 V<sub>DS</sub> 相同。饱和区曲线的斜率就是 1/r<sub>o</sub>，把 λ 调大斜率随之变陡，这正是短沟道器件镜像精度差的原因。</p></div>`,
+ cascode:`<div class="note"><span class="tag">原理</span><p>在 M2 上叠一个共源共栅管 M4。M4 的栅压固定，它起电压缓冲的作用：V<sub>out</sub> 变化 ΔV 时，节点 X 只变化约 ΔV/(g<sub>m</sub>r<sub>o</sub>)。M2 的 V<sub>DS</sub> 几乎不动，电流也就几乎不动。输入侧叠一个二极管 M3，使 X ≈ V<sub>GS1</sub>，让 M1、M2 的 V<sub>DS</sub> 相等。</p></div>
+  <div class="note"><span class="tag">关键公式</span><div class="eq">R<sub>out</sub> ≈ g<sub>m4</sub>r<sub>o4</sub>·r<sub>o2</sub></div><div class="eq">V<sub>out,min</sub> = V<sub>GS</sub> + V<sub>ov</sub> = V<sub>TH</sub> + 2V<sub>ov</sub></div></div>
+  <div class="note"><span class="tag">取舍</span><p>输出电阻提升约 g<sub>m</sub>r<sub>o</sub> 倍（常见 20 ～ 100 倍），代价是多占用一个 V<sub>TH</sub> 的余量。打开「纵轴放大」与基本镜像对比平坦度；再把 V<sub>out</sub> 拖到 1 V 以下，看 M4 先掉出饱和。</p></div>`,
+ wide:`<div class="note"><span class="tag">原理</span><p>不再用二极管堆叠产生共源共栅偏压，而是单独产生 V<sub>b</sub> ≈ V<sub>GS</sub> + V<sub>ov</sub>，让 M2 的 V<sub>DS</sub> 只比 V<sub>ov</sub> 略大。输入侧 M1 的栅接到 M3 的漏端，于是 M1 与 M2 的 V<sub>DS</sub> 都约为 V<sub>ov</sub>，匹配依然良好。</p></div>
+  <div class="note"><span class="tag">关键公式</span><div class="eq">R<sub>out</sub> ≈ g<sub>m4</sub>r<sub>o4</sub>·r<sub>o2</sub></div><div class="eq">V<sub>out,min</sub> ≈ 2V<sub>ov</sub> + 裕量（本页取 50 mV）</div></div>
+  <div class="note"><span class="tag">取舍</span><p>既保留共源共栅的高输出电阻，又把余量降到两个过驱动电压，是低压设计中最常用的形式。代价是需要一个额外的偏置支路产生 V<sub>b</sub>，并要为工艺角留出裕量。</p></div>`,
+ wilson:`<div class="note"><span class="tag">原理</span><p>负反馈：若 I<sub>out</sub> 偏大 → M2（二极管）栅压上升 → M1 吸收更多电流 → 节点 A 下降 → M3 的 V<sub>GS</sub> 减小 → I<sub>out</sub> 被拉回。反馈把输出电阻提升到与共源共栅相同的量级。</p></div>
+  <div class="note"><span class="tag">关键公式</span><div class="eq">R<sub>out</sub> ≈ g<sub>m3</sub>r<sub>o3</sub>r<sub>o2</sub>/2</div><div class="eq">V<sub>out,min</sub> ≈ V<sub>GS</sub> + V<sub>ov</sub></div></div>
+  <div class="note"><span class="tag">取舍</span><p>只需三只管子，但 M1（V<sub>DS</sub> = V<sub>A</sub>）与 M2（V<sub>DS</sub> = V<sub>GS</sub>）漏压不等，带来系统误差：看读数里的「复制误差」。在 M1 上方加一只二极管管来平衡漏压，就是改进型 Wilson。双极工艺中它还能抵消基极电流误差。</p></div>`,
+ reg:`<div class="note"><span class="tag">原理</span><p>用放大器 A 检测节点 X，与 V<sub>set</sub> 比较后驱动 M4 的栅极，把 X 钉住。V<sub>out</sub> 的扰动在到达 M2 之前又被压缩了 A 倍。</p></div>
+  <div class="note"><span class="tag">关键公式</span><div class="eq">R<sub>out</sub> ≈ (A+1)·g<sub>m4</sub>r<sub>o4</sub>·r<sub>o2</sub></div><div class="eq">V<sub>out,min</sub> ≈ V<sub>set</sub> + V<sub>ov</sub></div></div>
+  <div class="note"><span class="tag">取舍</span><p>输出电阻可达 GΩ 量级，常用于高增益运放（gain boosting）。代价是额外放大器的功耗，以及增强环路引入的零极点对（doublet），会让大信号建立出现慢尾巴。把 A 拖到 0，它就退化为普通的宽摆幅共源共栅。</p></div>`
+};
+const mirSchEl=$('mir-sch'), mirPlot=new Plot($('mir-plot'),$('mir-leg'));
+let mirAWrap=null;
+function mirBuild(){
+  mirSchEl.innerHTML=schMirror(MIR.topo); $('mir-notes').innerHTML=MIR_NOTES[MIR.topo];
+  if(mirAWrap) mirAWrap.hidden=MIR.topo!=='reg';
+  mirUpdate();
+}
+const RG={sat:'饱和',tri:'线性区',off:'截止'};
+function mirUpdate(){
+  const m=mirModel(MIR.topo,MIR), ms=MIR.topo!=='simple'?mirModel('simple',MIR):null;
+  const N=181, pts=[], ghost=[];
+  for(let i=0;i<N;i++){ const v=VDD*i/(N-1); pts.push([v,m.solve(v).I*1e6]); if(ms) ghost.push([v,ms.solve(v).I*1e6]); }
+  const op=m.solve(MIR.vout), ia=m.solve(1.3).I, ib=m.solve(1.5).I, rS=(ib-ia)>1e-18?0.2/(ib-ia):Infinity;
+  const Iu=MIR.Iref*1e6;
+  const ymax=Math.max(...pts.map(p=>p[1]),...ghost.map(p=>p[1]))*1.08;
+  const name=MIR_TOPOS.find(t=>t[0]===MIR.topo)[1];
+  mirPlot.set({x:[0,VDD],y:MIR.zoom?[Iu*0.92,Iu*1.08]:[0,ymax],xlabel:'V_out (V)',ylabel:'I_out (µA)',xfmt:v=>v.toFixed(1),yfmt:v=>MIR.zoom?v.toFixed(1):v.toFixed(0),
+    shade:[{x0:0,x1:m.vmin,color:'--warn',alpha:0.09}],
+    vlines:[{x:m.vmin,color:'--warn',label:'V_out,min'}],hlines:[{y:Iu,color:'--ink-2',dash:[2,4],label:'I_REF'}],
+    series:[ms&&{pts:ghost,color:'--ink-2',width:1.5,dash:[5,4],label:'基本电流镜（对照）'},{pts,color:'--accent',width:2.6,label:name}],
+    points:[{x:MIR.vout,y:op.I*1e6,color:'--accent',r:5}],
+    hname:'V_out',hx:v=>v.toFixed(3)+' V',hy:v=>v.toFixed(3)+' µA'});
+  const err=(op.I/MIR.Iref-1)*100;
+  stats($('mir-stats'),[
+    {k:'I<sub>out</sub>（当前 V<sub>out</sub>）',v:(op.I*1e6).toFixed(2)+' µA',hl:1},
+    {k:'复制误差',v:(err>=0?'+':'')+err.toFixed(2)+' %',s:'相对 I<sub>REF</sub>'},
+    {k:'R<sub>out</sub>（数值，1.3～1.5 V）',v:si(rS,'Ω',3)},
+    {k:'R<sub>out</sub>（公式估算）',v:si(m.rA,'Ω',2),s:'≈ '+m.rF},
+    {k:'V<sub>out,min</sub>',v:m.vmin.toFixed(2)+' V',s:'阴影区输出管掉出饱和'},
+    {k:'g<sub>m</sub> · r<sub>o</sub>',v:(2/MIR.vov/MIR.lam).toFixed(1),s:'本征增益 = 2/(V<sub>ov</sub>λ)'}]);
+  for(const [k,[a,b]] of Object.entries(op.devs)){ const r=region(a,b,VTN); setT('mir',k+'-r',RG[r],'rg '+r); }
+  if(op.nodes.vx!=null) setT('mir','vx','X '+op.nodes.vx.toFixed(3)+' V');
+  if(op.nodes.va!=null) setT('mir','va','A '+op.nodes.va.toFixed(2)+' V'+(op.nodes.clip?' (源饱和)':''));
+  setT('mir','vg','V_GS '+m.vg.toFixed(3)+' V');
+  if(m.vb!=null) setT('mir','vb','V_b '+m.vb.toFixed(3)+' V');
+  setT('mir','vo','V_out = '+MIR.vout.toFixed(2)+' V'); setT('mir','io','↓ '+(op.I*1e6).toFixed(1)+' µA');
+  setFlow(mirSchEl,'f-ref',MIR.Iref,MIR.Iref); setFlow(mirSchEl,'f-out',op.I,MIR.Iref);
+}
+mkSeg($('mir-seg'),MIR_TOPOS,MIR.topo,k=>{MIR.topo=k; mirBuild();});
+(function(){
+  const c=$('mir-ctl');
+  mkSlider(c,{id:'mir-vout',label:'输出电压 V<sub>out</sub>（工作点）',min:0,max:VDD,step:0.01,value:MIR.vout,fmt:v=>v.toFixed(2)+' V',on:v=>{MIR.vout=v;mirUpdate();}});
+  mkSlider(c,{id:'mir-iref',label:'参考电流 I<sub>REF</sub>',min:10e-6,max:200e-6,log:true,value:MIR.Iref,fmt:v=>(v*1e6).toFixed(1)+' µA',on:v=>{MIR.Iref=v;mirUpdate();}});
+  mkSlider(c,{id:'mir-vov',label:'过驱动电压 V<sub>ov</sub>（决定 W/L）',min:0.08,max:0.4,step:0.01,value:MIR.vov,fmt:v=>(v*1e3).toFixed(0)+' mV',on:v=>{MIR.vov=v;mirUpdate();}});
+  mkSlider(c,{id:'mir-lam',label:'沟道长度调制 λ（L 越短越大）',min:0.02,max:0.3,step:0.005,value:MIR.lam,fmt:v=>v.toFixed(3)+' V⁻¹',on:v=>{MIR.lam=v;mirUpdate();}});
+  const aw=document.createElement('div'); c.appendChild(aw); mirAWrap=aw; aw.hidden=MIR.topo!=='reg';
+  mkSlider(aw,{id:'mir-a',label:'辅助放大器增益 A',min:0,max:1000,step:1,value:MIR.A,fmt:v=>v.toFixed(0)+' V/V',on:v=>{MIR.A=v;mirUpdate();}});
+  const h=document.createElement('p'); h.className='hint'; h.innerHTML='V<sub>TH</sub> = 0.45 V；W/L 由 I<sub>REF</sub> 与 V<sub>ov</sub> 反推：β = 2I<sub>REF</sub>/V<sub>ov</sub><sup>2</sup>。'; c.appendChild(h);
+  $('mir-zoom').addEventListener('change',e=>{MIR.zoom=e.target.checked; mirUpdate();});
+})();
+mirBuild();
+
+/* =================================================================
+   02 WIDLAR
+   ================================================================= */
+const WID={Iref:100e-6,R:5e3,Tc:27};
+function widI(Iref,R,Tc){ const vt=kq*TK(Tc); if(R<=0) return Iref; const L=Math.log(Iref); return Math.exp(bisect(l=>Math.exp(l)*R-vt*(L-l),L-30,L)); }
+(function(){
+  const s=new Sch(380,300,'wid','Widlar 电流源原理图'); s.rail(60,330,24,'V_{CC}'); s.gnd(60,330,276);
+  s.wire([110,24],[110,58]); s.isrc(110,70,{name:'I_{REF}'}); s.wire([110,82],[110,150]);
+  s.bjt(110,180,{t:'npn',d:-1,name:'Q1'}); s.wire([110,210],[110,276]);
+  s.wire([110,118],[170,118],[170,180]); s.dot(110,118); s.dot(170,180);
+  s.wire([140,180],[230,180]);
+  s.bjt(260,180,{t:'npn',d:1,name:'Q2'}); s.wire([260,150],[260,62]); s.term(260,58); s.text(270,52,'I_{out}',{cls:'nm'}); s.text(268,100,'',{cls:'val',id:'io'});
+  s.res(260,210,276,{name:'R_{E}',id:'rv'});
+  s.text(118,250,'',{cls:'val',id:'dv'});
+  s.flow([[110,84],[110,148]],'f-ref'); s.flow([[260,64],[260,148]],'f-out');
+  $('wid-sch').innerHTML=s.svg();
+})();
+const widPlot=new Plot($('wid-plot'),$('wid-leg'));
+function widUpdate(){
+  const I=widI(WID.Iref,WID.R,WID.Tc), Rmax=20e3, mk=Tc=>{const a=[]; for(let i=0;i<=160;i++){const R=Rmax*i/160; a.push([R/1e3,widI(WID.Iref,R,Tc)*1e6]);} return a;};
+  widPlot.set({x:[0,20],y:[0,WID.Iref*1e6*1.05],xlabel:'R_E (kΩ)',ylabel:'I_out (µA)',xfmt:v=>v.toFixed(0),yfmt:v=>v.toFixed(0),
+    hlines:[{y:WID.Iref*1e6,color:'--ink-2',dash:[2,4],label:'I_REF'}],
+    series:[{pts:mk(-40),color:'--ctat',width:1.5,dash:[5,4],label:'−40 °C'},{pts:mk(125),color:'--ptat',width:1.5,dash:[5,4],label:'125 °C'},{pts:mk(WID.Tc),color:'--accent',width:2.6,label:WID.Tc.toFixed(0)+' °C（当前）'}],
+    points:[{x:WID.R/1e3,y:I*1e6,color:'--accent'}],hname:'R_E',hx:v=>v.toFixed(2)+' kΩ',hy:v=>v.toFixed(2)+' µA'});
+  const ratio=WID.Iref/I, vt=kq*TK(WID.Tc), ro=50/I, gm=I/vt, Rout=ro*(1+gm*WID.R);
+  const Im=widI(WID.Iref,WID.R,-40), Ip=widI(WID.Iref,WID.R,125);
+  stats($('wid-stats'),[
+    {k:'I<sub>out</sub>',v:si(I,'A',3),hl:1},
+    {k:'缩小比例 I<sub>REF</sub>/I<sub>out</sub>',v:ratio.toFixed(1)+' ×'},
+    {k:'R<sub>E</sub> 上压降 = ΔV<sub>BE</sub>',v:(I*WID.R*1e3).toFixed(1)+' mV'},
+    {k:'基本镜像需要的面积比',v:'1 : '+ratio.toFixed(1),s:'Widlar 用两只相同的管子'},
+    {k:'R<sub>out</sub> ≈ r<sub>o</sub>(1+g<sub>m</sub>R<sub>E</sub>)',v:si(Rout,'Ω',3),s:'对比 r<sub>o</sub> = '+si(ro,'Ω',3)},
+    {k:'I<sub>out</sub>：−40 → 125 °C',v:si(Im,'A',3)+' → '+si(Ip,'A',3)}]);
+  setT('wid','rv',kohm(WID.R)); setT('wid','io','↓ '+si(I,'A',3)); setT('wid','dv','');
+  const host=$('wid-sch'); setFlow(host,'f-ref',WID.Iref,WID.Iref); setFlow(host,'f-out',I,WID.Iref);
+}
+(function(){
+  const c=$('wid-ctl');
+  mkSlider(c,{id:'wid-iref',label:'参考电流 I<sub>REF</sub>',min:10e-6,max:1e-3,log:true,value:WID.Iref,fmt:v=>si(v,'A',3),on:v=>{WID.Iref=v;widUpdate();}});
+  mkSlider(c,{id:'wid-r',label:'发射极电阻 R<sub>E</sub>',min:0,max:20e3,step:100,value:WID.R,fmt:kohm,on:v=>{WID.R=v;widUpdate();}});
+  mkSlider(c,{id:'wid-t',label:'温度',min:-40,max:125,step:1,value:WID.Tc,fmt:v=>v.toFixed(0)+' °C',on:v=>{WID.Tc=v;widUpdate();}});
+})();
+widUpdate();
+
+/* =================================================================
+   03 SELF-BIASED (beta multiplier)
+   ================================================================= */
+const SB={R:10e3,K:4,beta:200e-6,leak:0.05,startup:true};
+let sbAnimTimer=null, sbFinal=0;
+(function(){
+  const s=new Sch(380,312,'sb','β 倍增器自偏置电流源原理图'); s.rail(46,350,24,'V_{DD}'); s.gnd(46,350,290);
+  s.a('<g class="startup" id="sb-startup">');
+  s.mos(70,110,{d:1,name:'M_{S}'}); s.wire([70,24],[70,80]); s.wire([70,140],[70,150],[140,150]); s.dot(140,150); s.text(36,96,'EN',{anchor:'middle',cls:'sub'});
+  s.a('</g>');
+  s.wire([140,24],[140,50]); s.mos(140,80,{t:'p',d:-1,name:'P3'}); s.wire([140,110],[140,160]);
+  s.wire([280,24],[280,50]); s.mos(280,80,{t:'p',d:1,name:'P4'}); s.wire([280,110],[280,160]);
+  s.wire([170,80],[250,80]); s.wire([280,135],[220,135],[220,80]); s.dot(280,135); s.dot(220,80);
+  s.mos(140,190,{d:-1,name:'M1',sub:'W/L'}); s.mos(280,190,{d:1,name:'M2',sub:'K·W/L'});
+  s.wire([170,190],[250,190]); s.wire([140,135],[200,135],[200,190]); s.dot(140,135); s.dot(200,190);
+  s.wire([140,220],[140,290]); s.res(280,220,290,{name:'R_{S}',id:'rv'});
+  s.text(148,128,'',{cls:'val',id:'il'}); s.text(288,124,'',{cls:'val',id:'ir'});
+  s.flow([[140,112],[140,158]],'f-l'); s.flow([[280,112],[280,158]],'f-r');
+  $('sb-sch').innerHTML=s.svg();
+})();
+const sbP1=new Plot($('sb-plot1'),$('sb-leg1')), sbP2=new Plot($('sb-plot2'),$('sb-leg2'));
+function sbCore(){
+  const {R,K,beta}=SB, Is=2/(beta*R*R)*Math.pow(1-1/Math.sqrt(K),2), leak=SB.leak*Is;
+  const a=Math.sqrt(2/(K*beta));
+  const F=I=>{ const c=Math.sqrt(2*Math.max(I,0)/beta), sq=(-a+Math.sqrt(a*a+4*R*c))/(2*R); return sq*sq; };
+  const G=I=>Math.max(0,F(I)-leak);
+  // fixed points of G(I)=I on (0, 2Is]
+  const roots=[]; let prevI=Is*1e-4, prevH=G(prevI)-prevI;
+  for(let i=1;i<=800;i++){ const I=Is*1e-4+2*Is*i/800, h=G(I)-I; if((h>0)!==(prevH>0)){ const r=bisect(x=>G(x)-x,prevI,I); roots.push({I:r,stable:prevH>0}); } prevI=I; prevH=h; }
+  const zeroStable=leak>0;
+  const stableNZ=roots.filter(r=>r.stable).pop(), unst=roots.find(r=>!r.stable);
+  return {Is,leak,F,G,roots,zeroStable,stableNZ,unst};
+}
+function sbCobweb(core){
+  const I0=SB.startup?Math.max(0.3*core.Is,core.unst?core.unst.I*1.4:0):0.01*core.Is;
+  const path=[[I0,0]]; let I=I0;
+  for(let k=0;k<40;k++){ const n=core.G(I); path.push([I,n]); path.push([n,n]); if(Math.abs(n-I)<core.Is*2e-4){ I=n; break; } I=n; }
+  return {I0,path,final:I};
+}
+function sbDraw(core,cw,shown,done){
+  const Iu=v=>v*1e6, Is=core.Is, xm=2*Is;
+  const A=[],B=[]; for(let i=0;i<=160;i++){ const I=xm*i/160; A.push([Iu(I),VTN+Math.sqrt(2*I/SB.beta)]); B.push([Iu(I),VTN+Math.sqrt(2*I/(SB.K*SB.beta))+I*SB.R]); }
+  const vgs=VTN+Math.sqrt(2*Is/SB.beta), ymax=Math.max(A[A.length-1][1],vgs)*1.04;
+  sbP1.set({x:[0,Iu(xm)],y:[VTN-0.05,Math.min(ymax,VTN+(ymax-VTN)*1.05)],xlabel:'I (µA)',ylabel:'栅压 (V)',xfmt:v=>v.toFixed(v<10?1:0),yfmt:v=>v.toFixed(2),ml:50,
+    series:[{pts:A,color:'--ctat',width:2.4,label:'V<sub>GS1</sub>(I)：M1 侧'},{pts:B,color:'--ptat',width:2.4,label:'V<sub>GS2</sub>(I) + I·R<sub>S</sub>：M2 侧'}],
+    points:[{x:0,y:VTN,color:'--bad',r:5,label:'简并点 I=0'},{x:Iu(Is),y:vgs,color:'--accent',r:5,label:'I* = '+si(Is,'A',3),align:'right'}],
+    hname:'I',hx:v=>v.toFixed(2)+' µA',hy:v=>v.toFixed(3)+' V'});
+  const xm2=1.6*Is, Gp=[],Id=[]; for(let i=0;i<=200;i++){ const I=xm2*i/200; Gp.push([Iu(I),Iu(core.G(I))]); Id.push([Iu(I),Iu(I)]); }
+  const pts=[{x:0,y:0,color:core.zeroStable?'--bad':'--ink-2',r:5,hollow:!core.zeroStable}];
+  core.roots.forEach(r=>pts.push({x:Iu(r.I),y:Iu(r.I),color:r.stable?'--accent':'--warn',r:5,hollow:!r.stable,label:r.stable?'稳定点':'阈值 I_u',align:r.stable?'right':'left'}));
+  sbP2.set({x:[0,Iu(xm2)],y:[0,Iu(xm2)],xlabel:'本轮支路电流 I_n (µA)',ylabel:'下一轮 I_n+1 (µA)',xfmt:v=>v.toFixed(v<10?1:0),yfmt:v=>v.toFixed(v<10?1:0),ml:50,
+    series:[{pts:Id,color:'--ink-2',width:1.2,dash:[4,4],label:'I<sub>n+1</sub> = I<sub>n</sub>（自洽线）',nohover:true},{pts:Gp,color:'--accent',width:2.4,label:'环路映射 G(I)'}],
+    cobweb:cw.path.slice(0,shown).map(p=>[Iu(p[0]),Iu(p[1])]),points:pts,
+    legendExtra:`<span style="color:var(--ptat)"><i></i><span style="color:var(--ink-2)">上电轨迹</span></span>`,
+    hname:'I_n',hx:v=>v.toFixed(2)+' µA',hy:v=>v.toFixed(2)+' µA'});
+  if(done){
+    const ok=cw.final>0.5*Is; sbFinal=ok?cw.final:0;
+    $('sb-status').innerHTML=ok?'<span class="pill ok">已启动：'+si(cw.final,'A',3)+'</span>':(core.stableNZ?'<span class="pill bad">停在零电流</span>':'<span class="pill bad">漏电过大，无非零工作点</span>');
+    const host=$('sb-sch'); setFlow(host,'f-l',sbFinal,Is); setFlow(host,'f-r',sbFinal,Is);
+    setT('sb','il',sbFinal?si(sbFinal,'A',3):'0 A'); setT('sb','ir',sbFinal?si(sbFinal,'A',3):'0 A');
+  } else $('sb-status').innerHTML='<span class="pill warn">上电中…</span>';
+}
+function sbUpdate(animate){
+  if(sbAnimTimer){ clearInterval(sbAnimTimer); sbAnimTimer=null; }
+  const core=sbCore(), cw=sbCobweb(core);
+  $('sb-startup').classList.toggle('offst',!SB.startup);
+  setT('sb','rv',kohm(SB.R));
+  const gm=2*(1-1/Math.sqrt(SB.K))/SB.R;
+  stats($('sb-stats'),[
+    {k:'理论工作点 I*',v:si(core.Is,'A',3),hl:1,s:'不含 V<sub>DD</sub>'},
+    {k:'g<sub>m1</sub> = 2(1−1/√K)/R<sub>S</sub>',v:si(gm,'S',3),s:'与 μC<sub>ox</sub>W/L 无关'},
+    {k:'V<sub>GS1</sub>',v:(VTN+Math.sqrt(2*core.Is/SB.beta)).toFixed(3)+' V'},
+    {k:'启动阈值 I<sub>u</sub>',v:core.unst?si(core.unst.I,'A',3):(core.leak>0?'—':'0（零点不稳定）'),s:'低于它会塌回零'},
+    {k:'上电初值',v:si(cw.I0,'A',3),s:SB.startup?'启动电路注入':'仅靠噪声扰动'}]);
+  if(!animate||reduce){ sbDraw(core,cw,cw.path.length,true); return; }
+  let k=1; sbDraw(core,cw,k,false);
+  sbAnimTimer=setInterval(()=>{ k+=1; const done=k>=cw.path.length; sbDraw(core,cw,k,done); if(done){ clearInterval(sbAnimTimer); sbAnimTimer=null; } },130);
+}
+(function(){
+  const c=$('sb-ctl');
+  mkSlider(c,{id:'sb-r',label:'源极电阻 R<sub>S</sub>',min:2e3,max:40e3,step:100,value:SB.R,fmt:kohm,on:v=>{SB.R=v;sbUpdate(false);}});
+  mkSlider(c,{id:'sb-k',label:'M2 / M1 宽长比之比 K',min:1.5,max:16,step:0.1,value:SB.K,fmt:v=>v.toFixed(1),on:v=>{SB.K=v;sbUpdate(false);}});
+  mkSlider(c,{id:'sb-b',label:'μ<sub>n</sub>C<sub>ox</sub>(W/L)<sub>1</sub>（随工艺、温度漂移）',min:50e-6,max:1e-3,log:true,value:SB.beta,fmt:v=>(v*1e6).toFixed(0)+' µA/V²',on:v=>{SB.beta=v;sbUpdate(false);}});
+  mkSlider(c,{id:'sb-l',label:'寄生漏电分流（相对 I*）',min:0,max:0.25,step:0.005,value:SB.leak,fmt:v=>(v*100).toFixed(1)+' %',on:v=>{SB.leak=v;sbUpdate(false);}});
+  const r=document.createElement('div'); r.className='row';
+  r.innerHTML='<label class="chk"><input type="checkbox" id="sb-st" checked>启用启动电路</label><button type="button" class="btn primary" id="sb-go">▶ 重新上电</button>';
+  c.appendChild(r);
+  const h=document.createElement('p'); h.className='hint'; h.textContent='关掉启动电路后点「重新上电」：只有噪声扰动时，电路会塌回零电流。再把漏电拖到 0，看看它会不会「碰运气」启动。'; c.appendChild(h);
+  $('sb-st').addEventListener('change',e=>{SB.startup=e.target.checked; sbUpdate(true);});
+  $('sb-go').addEventListener('click',()=>sbUpdate(true));
+})();
+sbUpdate(false);
+
+/* =================================================================
+   04 BANDGAP PRINCIPLE
+   ================================================================= */
+const BG={n:8,K:0,VBE0:0.65,eta:3.5,m:1,Tz:42.5};
+const P=()=>({VBE0:BG.VBE0,eta:BG.eta,m:BG.m});
+BG.K=kAuto(Math.log(BG.n),P(),TK(BG.Tz));
+const bgp1=new Plot($('bgp-plot1'),$('bgp-leg1')), bgp2=new Plot($('bgp-plot2'));
+let bgK=null;
+function bgpUpdate(){
+  const p=P(), lnN=Math.log(BG.n);
+  const V=[],Pt=[],R=[];
+  TEMPS.forEach(c=>{ const T=TK(c), a=vbe(T,p), b=BG.K*kq*T*lnN; V.push([c,a]); Pt.push([c,b]); R.push([c,a+b]); });
+  const t=tcOf(T=>vbe(T,p)+BG.K*kq*T*lnN);
+  bgp1.set({x:[-40,125],y:[0,1.5],xlabel:'温度 (°C)',ylabel:'电压 (V)',xfmt:v=>v.toFixed(0),yfmt:v=>v.toFixed(1),
+    series:[{pts:V,color:'--ctat',width:2.2,label:'V<sub>BE</sub>（CTAT）'},{pts:Pt,color:'--ptat',width:2.2,label:'K·V<sub>T</sub>ln n（PTAT）'},{pts:R,color:'--accent',width:3,label:'V<sub>REF</sub> = 两者之和'}],
+    hlines:[{y:VG0,color:'--ink-2',dash:[2,4],label:'V_G0 = 1.205 V',below:true}],
+    hname:'T',hx:v=>v.toFixed(1)+' °C',hy:v=>v.toFixed(4)+' V'});
+  const dev=t.pts.map(([c,v])=>[c,(v-t.v27)*1e3]); const lo=Math.min(...dev.map(d=>d[1])), hi=Math.max(...dev.map(d=>d[1])), pad=Math.max(0.5,(hi-lo)*0.15);
+  bgp2.set({x:[-40,125],y:[lo-pad,hi+pad],xlabel:'温度 (°C)',ylabel:'ΔV_REF (mV)',xfmt:v=>v.toFixed(0),yfmt:v=>v.toFixed(Math.abs(hi-lo)<3?1:0),ml:58,
+    series:[{pts:dev,color:'--accent',width:2.6,label:'ΔV<sub>REF</sub>'}],
+    vlines:[{x:BG.Tz,color:'--ink-2',label:'T_z',dash:[3,4]}],
+    hlines:[{y:(t.max-t.v27)*1e3,color:'--warn',dash:[3,3]},{y:(t.min-t.v27)*1e3,color:'--warn',dash:[3,3],label:'box: '+((t.max-t.min)*1e3).toFixed(2)+' mV'}],
+    hname:'T',hx:v=>v.toFixed(1)+' °C',hy:v=>v.toFixed(3)+' mV'});
+  const T27=TK(27), s1=dvbe(T27,p)*1e3, s2=BG.K*kq*lnN*1e3;
+  $('sum-1').textContent=(s1).toFixed(2)+' mV/K'; $('sum-2').textContent='+'+s2.toFixed(2)+' mV/K'; $('sum-3').textContent=(s1+s2>=0?'+':'')+(s1+s2).toFixed(3)+' mV/K（27 °C）';
+  stats($('bgp-stats'),[
+    {k:'V<sub>REF</sub> @ 27 °C',v:t.v27.toFixed(4)+' V',hl:1},
+    {k:'温漂（box 法）',v:t.tc.toFixed(1)+' ppm/°C',s:'−40 ～ 125 °C'},
+    {k:'V<sub>REF</sub> 总变化',v:((t.max-t.min)*1e3).toFixed(2)+' mV'},
+    {k:'ΔV<sub>BE</sub> @ 27 °C',v:(kq*T27*lnN*1e3).toFixed(1)+' mV',s:'V<sub>T</sub>·ln '+BG.n},
+    {k:'所需 K',v:BG.K.toFixed(2),s:'n 越大 K 越小'},
+    {k:'理论值 V<sub>G0</sub>+(η−m)V<sub>T</sub>',v:(VG0+(BG.eta-BG.m)*kq*TK(BG.Tz)).toFixed(4)+' V'}]);
+  if(typeof bgsUpdate==='function') bgsUpdate();
+}
+(function(){
+  const c=$('bgp-ctl');
+  mkSlider(c,{id:'bg-n',label:'面积（电流密度）比 n',min:2,max:64,step:1,value:BG.n,fmt:v=>v.toFixed(0),on:v=>{BG.n=v;bgpUpdate();}});
+  bgK=mkSlider(c,{id:'bg-k',label:'PTAT 增益 K',min:0,max:30,step:0.01,value:BG.K,fmt:v=>v.toFixed(2),on:v=>{BG.K=v;bgpUpdate();}});
+  mkSlider(c,{id:'bg-tz',label:'零温漂点 T<sub>z</sub>',min:-40,max:125,step:0.5,value:BG.Tz,fmt:v=>v.toFixed(1)+' °C',on:v=>{BG.Tz=v;bgpUpdate();}});
+  const r=document.createElement('div'); r.className='row';
+  r.innerHTML='<button type="button" class="btn primary" id="bg-auto">求零温漂 K（在 T<sub>z</sub>）</button>';
+  c.appendChild(r);
+  $('bg-auto').addEventListener('click',()=>{ bgK.set(kAuto(Math.log(BG.n),P(),TK(BG.Tz))); });
+  const sep=document.createElement('p'); sep.className='hint'; sep.innerHTML='<b>器件参数</b>（第 05 章沿用）'; c.appendChild(sep);
+  mkSlider(c,{id:'bg-vbe0',label:'V<sub>BE0</sub>（27 °C 时的 V<sub>BE</sub>）',min:0.55,max:0.78,step:0.005,value:BG.VBE0,fmt:v=>(v*1e3).toFixed(0)+' mV',on:v=>{BG.VBE0=v;bgpUpdate();}});
+  mkSlider(c,{id:'bg-eta',label:'η（I<sub>S</sub> 的温度指数，工艺相关）',min:2,max:5.5,step:0.1,value:BG.eta,fmt:v=>v.toFixed(1),on:v=>{BG.eta=v;bgpUpdate();}});
+  const sg=document.createElement('div'); sg.innerHTML='<div class="sl" style="margin-bottom:6px"><span>偏置电流类型</span></div><div class="seg" id="bg-m"></div>'; c.appendChild(sg);
+  mkSeg($('bg-m'),[['1','PTAT 电流（m = 1）'],['0','恒定电流（m = 0）']],'1',k=>{BG.m=+k;bgpUpdate();});
+})();
+
+/* =================================================================
+   05 BANDGAP STRUCTURES
+   ================================================================= */
+function schBGW(){
+  const s=new Sch(380,320,'bgs','Widlar 带隙原理图'); s.rail(60,350,22,'V_{CC}'); s.gnd(60,350,296);
+  s.wire([310,22],[310,50]); s.isrc(310,62,{name:'I_{B}'}); s.wire([310,74],[310,170]);
+  s.wire([90,100],[346,100]); s.dot(310,100); s.dot(220,100); s.term(350,100); s.text(352,88,'V_{REF}',{anchor:'end',cls:'nm'}); s.text(352,122,'',{anchor:'end',cls:'val',id:'vref'});
+  s.res(90,100,152,{name:'R_{1}',side:'left',id:'r1'}); s.wire([90,152],[90,170]);
+  s.bjt(90,200,{t:'npn',d:-1,name:'Q1',area:'×1'}); s.wire([90,160],[150,160],[150,200]); s.dot(90,160); s.dot(150,200);
+  s.wire([120,200],[190,200]);
+  s.bjt(220,200,{t:'npn',d:1,name:'Q2',area:'×1'});
+  s.res(220,100,152,{name:'R_{2}',id:'r2'}); s.wire([220,152],[220,170]);
+  s.wire([220,160],[260,160],[260,200],[280,200]); s.dot(220,160);
+  s.bjt(310,200,{t:'npn',d:1,name:'Q3'}); s.wire([310,230],[310,296]); s.wire([90,230],[90,296]);
+  s.res(220,230,296,{name:'R_{3}',id:'r3'});
+  s.text(82,262,'',{anchor:'end',cls:'val',id:'i1'});
+  s.flow([[90,232],[90,294]],'f-1'); s.flow([[310,232],[310,294]],'f-3');
+  return s.svg();
+}
+function schBGB(){
+  const s=new Sch(360,372,'bgs','Brokaw 带隙原理图'); s.rail(60,320,22,'V_{CC}');
+  s.res(110,22,80,{name:'R_{C}',side:'left'}); s.wire([110,80],[110,170]);
+  s.res(250,22,80,{name:'R_{C}'}); s.wire([250,80],[250,170]);
+  s.wire([110,95],[165,95],[165,108]); s.dot(110,95); s.wire([250,95],[195,95],[195,108]); s.dot(250,95);
+  s.amp(180,108,'down',['−','+']);
+  s.wire([180,158],[180,200]); s.dot(180,200); s.text(198,140,'V_{REF}',{cls:'nm'}); s.text(198,154,'',{cls:'val',id:'vref'});
+  s.bjt(110,200,{t:'npn',d:-1,name:'Q1',area:'×n'}); s.bjt(250,200,{t:'npn',d:1,name:'Q2',area:'×1'});
+  s.wire([140,200],[220,200]);
+  s.res(110,230,282,{name:'R_{2}',side:'left',id:'r2'}); s.wire([110,282],[110,296],[250,296]); s.wire([250,230],[250,296]);
+  s.dot(180,296); s.res(180,296,346,{name:'R_{1}',id:'r1'}); s.gsym(180,346);
+  s.text(102,130,'',{anchor:'end',cls:'val',id:'i1'}); s.text(258,130,'',{cls:'val',id:'i2'});
+  s.flow([[110,98],[110,168]],'f-1'); s.flow([[250,98],[250,168]],'f-2');
+  return s.svg();
+}
+function schBGC(){
+  const s=new Sch(400,340,'bgs','CMOS 运放型带隙原理图'); s.rail(50,380,20,'V_{DD}'); s.gnd(50,380,310);
+  [100,210,330].forEach(x=>s.wire([x,20],[x,45]));
+  s.mos(100,75,{t:'p',d:-1,name:'P1'}); s.mos(210,75,{t:'p',d:1,name:'P2'}); s.mos(330,75,{t:'p',d:1,name:'P3'});
+  s.wire([130,75],[180,75]); s.dot(155,75);
+  s.d('M155,75V34H204A6,6 0 0 1 216,34H300V75');
+  s.amp(155,150,'up',['−','+']); s.wire([155,100],[155,75]);
+  s.wire([140,150],[140,170],[100,170]); s.wire([170,150],[170,170],[210,170]);
+  s.wire([100,105],[100,210]); s.dot(100,170); s.text(92,166,'X',{anchor:'end',cls:'nm'});
+  s.bjt(100,240,{t:'pnp',d:1,name:'Q1',area:'×1'}); s.wire([70,240],[70,310]); s.wire([100,270],[100,310]);
+  s.wire([210,105],[210,170]); s.dot(210,170); s.text(218,166,'Y',{cls:'nm'});
+  s.res(210,170,210,{name:'R_{1}',id:'r1'});
+  s.bjt(210,240,{t:'pnp',d:1,name:'Q2',area:'×n'}); s.wire([180,240],[180,310]); s.wire([210,270],[210,310]);
+  s.wire([330,105],[330,150]); s.dot(330,150); s.wire([330,150],[366,150]); s.term(370,150);
+  s.text(372,120,'V_{REF}',{anchor:'middle',cls:'nm'}); s.text(372,141,'',{anchor:'middle',cls:'val',id:'vref'});
+  s.res(330,150,210,{name:'R_{2}',id:'r2'});
+  s.bjt(330,240,{t:'pnp',d:1,name:'Q3',area:'×1'}); s.wire([300,240],[300,310]); s.wire([330,270],[330,310]);
+  s.text(92,135,'',{anchor:'end',cls:'val',id:'i1'}); s.text(218,135,'',{cls:'val',id:'i2'}); s.text(322,128,'',{anchor:'end',cls:'val',id:'i3'});
+  s.flow([[100,107],[100,165]],'f-1'); s.flow([[210,107],[210,165]],'f-2'); s.flow([[330,107],[330,145]],'f-3');
+  return s.svg();
+}
+function schBGN(){
+  const s=new Sch(430,340,'bgs','Banba 电流模带隙原理图'); s.rail(50,410,20,'V_{DD}'); s.gnd(50,410,310);
+  [120,260,370].forEach(x=>s.wire([x,20],[x,45]));
+  s.mos(120,75,{t:'p',d:-1,name:'P1'}); s.mos(260,75,{t:'p',d:1,name:'P2'}); s.mos(370,75,{t:'p',d:1,name:'P3'});
+  s.wire([150,75],[230,75]); s.dot(190,75);
+  s.d('M190,75V34H254A6,6 0 0 1 266,34H340V75');
+  s.amp(190,150,'up',['−','+']); s.wire([190,100],[190,75]);
+  s.wire([175,150],[175,170],[120,170]); s.wire([205,150],[205,170],[260,170]);
+  s.wire([120,105],[120,210]); s.dot(120,170); s.text(112,162,'X',{anchor:'end',cls:'nm'});
+  s.wire([120,170],[70,170]); s.res(70,170,310,{name:'R_{2}',side:'left',id:'r2a'});
+  s.bjt(120,240,{t:'pnp',d:1,name:'Q1',area:'×1'}); s.wire([90,240],[90,310]); s.wire([120,270],[120,310]);
+  s.wire([260,105],[260,170]); s.dot(260,170); s.text(268,162,'Y',{cls:'nm'});
+  s.wire([260,170],[310,170]); s.res(310,170,310,{name:'R_{2}',id:'r2b'});
+  s.res(260,170,210,{name:'R_{1}',side:'left',id:'r1'});
+  s.bjt(260,240,{t:'pnp',d:1,name:'Q2',area:'×n'}); s.wire([230,240],[230,310]); s.wire([260,270],[260,310]);
+  s.wire([370,105],[370,150]); s.dot(370,150); s.wire([370,150],[396,150]); s.term(400,150);
+  s.text(402,120,'V_{REF}',{anchor:'middle',cls:'nm'}); s.text(402,141,'',{anchor:'middle',cls:'val',id:'vref'});
+  s.res(370,150,310,{name:'R_{3}',id:'r3'});
+  s.text(112,135,'',{anchor:'end',cls:'val',id:'i1'}); s.text(268,135,'',{cls:'val',id:'i2'}); s.text(362,128,'',{anchor:'end',cls:'val',id:'i3'});
+  s.flow([[120,107],[120,165]],'f-1'); s.flow([[260,107],[260,165]],'f-2'); s.flow([[370,107],[370,145]],'f-3');
+  return s.svg();
+}
+const R100=v=>Math.round(v/100)*100;
+const BGT={
+  widlar:{name:'Widlar 带隙',title:'Widlar 带隙（1971，全双极）',sch:schBGW,opamp:false,
+    params:[['R1','R<sub>1</sub>',1e3,30e3],['R2','R<sub>2</sub>',10e3,200e3],['R3','R<sub>3</sub>',0.5e3,20e3]],
+    init(P_,Tz){ const K=kAuto(Math.log(10),P_,Tz); return {R1:6e3,R2:60e3,R3:R100(60e3/K)}; },
+    auto(r,P_,Tz){ r.R3=R100(r.R2/kAuto(Math.log(r.R2/r.R1),P_,Tz)); },
+    calc(T,P_,r){ const vt=kq*T, lnN=Math.log(r.R2/r.R1), I=vt*lnN/r.R3; return {vref:vbe(T,P_)+r.R2*I,I,K:r.R2/r.R3,lnN}; },
+    vdd:(v)=>v+0.2,vddS:'V<sub>REF</sub> + V<sub>CE,sat</sub>',
+    labels(r,o){ setT('bgs','r1',kohm(r.R1)); setT('bgs','r2',kohm(r.R2)); setT('bgs','r3',kohm(r.R3)); setT('bgs','i1','I₁ '+si(o.I*r.R2/r.R1,'A',2)); },
+    flows(host,o,r){ setFlow(host,'f-1',o.I*r.R2/r.R1,o.I); setFlow(host,'f-3',o.I,o.I); },
+    notes:`<div class="note"><span class="tag">公式</span><div class="eq">V<sub>REF</sub> = V<sub>BE3</sub> + (R<sub>2</sub>/R<sub>3</sub>)·V<sub>T</sub>·ln(R<sub>2</sub>/R<sub>1</sub>)</div></div>
+      <div class="note"><span class="tag">原理</span><p>R<sub>1</sub>、R<sub>2</sub> 上端都接 V<sub>REF</sub>，下端都约为一个 V<sub>BE</sub>，所以 I<sub>1</sub>/I<sub>2</sub> ≈ R<sub>2</sub>/R<sub>1</sub>。两只等面积的 Q1、Q2 因而电流密度不同，ΔV<sub>BE</sub> 落在 R<sub>3</sub> 上，再按 R<sub>2</sub>/R<sub>3</sub> 放大。Q3 既提供 V<sub>BE</sub>，又是闭环的增益级。</p></div>
+      <div class="note"><span class="tag">要点</span><p>1971 年用于 LM113，是第一个商用带隙。它没有运放，电流比靠电阻比设定，N = R<sub>2</sub>/R<sub>1</sub> 同时出现在 ln 里和增益里，调一个电阻会同时改变两者。</p></div>`},
+  brokaw:{name:'Brokaw',title:'Brokaw 带隙单元（1974）',sch:schBGB,opamp:false,
+    params:[['R1','R<sub>1</sub>',5e3,100e3],['R2','R<sub>2</sub>',1e3,20e3],['n','面积比 n',2,48,1]],
+    init(P_,Tz){ const K=kAuto(Math.log(8),P_,Tz); return {R1:R100(K*5e3/2),R2:5e3,n:8}; },
+    auto(r,P_,Tz){ r.R1=R100(kAuto(Math.log(r.n),P_,Tz)*r.R2/2); },
+    calc(T,P_,r){ const vt=kq*T, lnN=Math.log(r.n), I=vt*lnN/r.R2; return {vref:vbe(T,P_)+2*I*r.R1,I,K:2*r.R1/r.R2,lnN}; },
+    vdd:(v)=>v+0.3,vddS:'≈ V<sub>REF</sub> + 0.3 V',
+    labels(r,o){ setT('bgs','r1',kohm(r.R1)); setT('bgs','r2',kohm(r.R2)); setT('bgs','i1',si(o.I,'A',2)); setT('bgs','i2',si(o.I,'A',2)); },
+    flows(host,o){ setFlow(host,'f-1',o.I,o.I); setFlow(host,'f-2',o.I,o.I); },
+    notes:`<div class="note"><span class="tag">公式</span><div class="eq">V<sub>REF</sub> = V<sub>BE2</sub> + 2(R<sub>1</sub>/R<sub>2</sub>)·V<sub>T</sub>·ln n</div></div>
+      <div class="note"><span class="tag">原理</span><p>两只集电极电阻相等，运放强迫两集电极电压相等，于是两管电流相等。Q1 面积为 n 倍并串 R<sub>2</sub>：I·R<sub>2</sub> = ΔV<sub>BE</sub> = V<sub>T</sub>ln n。两路电流一起流过 R<sub>1</sub>，产生 PTAT 电压 2I·R<sub>1</sub>，与 V<sub>BE2</sub> 相加就是基极电压 V<sub>REF</sub>。</p></div>
+      <div class="note"><span class="tag">要点</span><p>运放失调先被前级增益 g<sub>m</sub>R<sub>C</sub> 衰减，再折算到 ΔV<sub>BE</sub>，所以对失调不敏感。V<sub>REF</sub> 取自高阻的基极，加一个电阻分压反馈就能得到 2.5 V、5 V 等输出。需要真正的 NPN，多见于双极或 BiCMOS 工艺。</p></div>`},
+  cmos:{name:'CMOS 运放型',title:'CMOS 运放型带隙（衬底 PNP）',sch:schBGC,opamp:true,
+    params:[['R1','R<sub>1</sub>',2e3,40e3],['R2','R<sub>2</sub>',20e3,400e3],['n','面积比 n',2,48,1]],
+    init(P_,Tz){ const K=kAuto(Math.log(8),P_,Tz); return {R1:10e3,R2:R100(K*10e3),n:8}; },
+    auto(r,P_,Tz){ r.R2=R100(kAuto(Math.log(r.n),P_,Tz)*r.R1); },
+    calc(T,P_,r,vos){ const vt=kq*T, lnN=Math.log(r.n), I=(vt*lnN-vos)/r.R1; return {vref:vbe(T,P_)+I*r.R2,I,K:r.R2/r.R1,lnN}; },
+    gain:r=>r.R2/r.R1, gainS:'R<sub>2</sub>/R<sub>1</sub>',
+    vdd:(v)=>v+0.2,vddS:'V<sub>REF</sub> + |V<sub>DS,sat</sub>|',
+    labels(r,o){ setT('bgs','r1',kohm(r.R1)); setT('bgs','r2',kohm(r.R2)); ['i1','i2','i3'].forEach(k=>setT('bgs',k,si(o.I,'A',2))); },
+    flows(host,o){ ['f-1','f-2','f-3'].forEach(k=>setFlow(host,k,o.I,o.I)); },
+    notes:`<div class="note"><span class="tag">公式</span><div class="eq">V<sub>REF</sub> = V<sub>BE3</sub> + (R<sub>2</sub>/R<sub>1</sub>)·(V<sub>T</sub>ln n − V<sub>os</sub>)</div></div>
+      <div class="note"><span class="tag">原理</span><p>标准 CMOS 工艺里只有衬底寄生 PNP，集电极固定接地，所以用二极管连接的 PNP。运放使 V<sub>X</sub> = V<sub>Y</sub>，R<sub>1</sub> 上的电压正好是 ΔV<sub>BE</sub>，支路电流 I = V<sub>T</sub>ln n/R<sub>1</sub> 为 PTAT。P3 复制该电流流过 R<sub>2</sub> 和 Q3，得到 V<sub>BE3</sub> + I·R<sub>2</sub>。</p></div>
+      <div class="note"><span class="tag">失调是头号敌人</span><p>V<sub>os</sub> 直接叠加在只有约 50 mV 的 ΔV<sub>BE</sub> 上，再被放大 R<sub>2</sub>/R<sub>1</sub>（约 10）倍：1 mV 失调就是约 10 mV 输出误差。拖动 V<sub>os</sub> 滑块验证。对策：增大 n、chopper 或自动调零、加大输入管面积、出厂修调。</p></div>`},
+  banba:{name:'Banba 电流模',title:'Banba 电流模带隙（亚 1 V）',sch:schBGN,opamp:true,
+    params:[['R1','R<sub>1</sub>',2e3,40e3],['R2','R<sub>2</sub>（两只相同）',20e3,400e3],['R3','R<sub>3</sub>（设定输出）',10e3,300e3],['n','面积比 n',2,48,1]],
+    init(P_,Tz){ const K=kAuto(Math.log(8),P_,Tz), R2=R100(K*10e3); const v=VG0+(P_.eta-P_.m)*kq*Tz; return {R1:10e3,R2,R3:R100(0.6/v*R2),n:8}; },
+    auto(r,P_,Tz){ r.R2=R100(kAuto(Math.log(r.n),P_,Tz)*r.R1); },
+    calc(T,P_,r,vos){ const vt=kq*T, lnN=Math.log(r.n), Ip=(vt*lnN-vos)/r.R1, Ic=(vbe(T,P_)-vos)/r.R2; return {vref:r.R3*(Ip+Ic),I:Ip+Ic,Ip,Ic,K:r.R2/r.R1,lnN}; },
+    gain:r=>r.R3/r.R2*(1+r.R2/r.R1), gainS:'(R<sub>3</sub>/R<sub>2</sub>)(1+R<sub>2</sub>/R<sub>1</sub>)',
+    vdd:(v,P_)=>vbe(TK(-40),P_)+0.2,vddS:'V<sub>BE</sub>(−40 °C) + |V<sub>DS,sat</sub>|',
+    labels(r,o){ setT('bgs','r1',kohm(r.R1)); setT('bgs','r2a',kohm(r.R2)); setT('bgs','r2b',kohm(r.R2)); setT('bgs','r3',kohm(r.R3)); ['i1','i2','i3'].forEach(k=>setT('bgs',k,si(o.I,'A',2))); },
+    flows(host,o){ ['f-1','f-2','f-3'].forEach(k=>setFlow(host,k,o.I,o.I)); },
+    notes:`<div class="note"><span class="tag">公式</span><div class="eq">V<sub>REF</sub> = (R<sub>3</sub>/R<sub>2</sub>)·[V<sub>BE</sub> + (R<sub>2</sub>/R<sub>1</sub>)·V<sub>T</sub>ln n]</div></div>
+      <div class="note"><span class="tag">原理</span><p>X、Y 两点各并联一只 R<sub>2</sub>。由于 V<sub>X</sub> = V<sub>Y</sub> = V<sub>BE1</sub>，每只 R<sub>2</sub> 流过 CTAT 电流 V<sub>BE</sub>/R<sub>2</sub>；双极支路仍流过 PTAT 电流 V<sub>T</sub>ln n/R<sub>1</sub>。两者在 PMOS 里相加成零温漂电流，P3 把它镜像到 R<sub>3</sub> 上转成电压。思路是在电流域里相加，而不是在电压域里相加。</p></div>
+      <div class="note"><span class="tag">要点</span><p>输出由 R<sub>3</sub>/R<sub>2</sub> 任意缩放，可以低于 1 V；最低电源只需约 V<sub>BE</sub> + |V<sub>DS,sat</sub>| ≈ 1 V。Banba 等人 1999 年提出，是亚 1 V 带隙的经典结构。代价是电阻面积较大，且失调会被放大 (R<sub>3</sub>/R<sub>2</sub>)(1+R<sub>2</sub>/R<sub>1</sub>) 倍。</p></div>`}
+};
+const BGS={topo:'cmos',vos:0,r:{}};
+const bgsPlot=new Plot($('bgs-plot'),$('bgs-leg'));
+const TZ0=TK(42.5);
+Object.keys(BGT).forEach(k=>{ BGS.r[k]=BGT[k].init(P(),TZ0); });
+let bgsSliders={};
+function bgsBuild(){
+  const t=BGT[BGS.topo]; $('bgs-sch').innerHTML=t.sch(); $('bgs-sch-t').textContent=t.title; $('bgs-notes').innerHTML=t.notes;
+  const c=$('bgs-ctl'); c.innerHTML=''; bgsSliders={};
+  t.params.forEach(([k,lab,mn,mx,st])=>{
+    const isN=k==='n';
+    bgsSliders[k]=mkSlider(c,{id:'bgs-'+BGS.topo+'-'+k,label:lab,min:mn,max:mx,step:st||100,value:BGS.r[BGS.topo][k],fmt:isN?(v=>v.toFixed(0)):kohm,on:v=>{BGS.r[BGS.topo][k]=v;bgsUpdate();}});
+  });
+  if(t.opamp) mkSlider(c,{id:'bgs-vos',label:'运放输入失调 V<sub>os</sub>',min:-5e-3,max:5e-3,step:0.1e-3,value:BGS.vos,fmt:v=>(v*1e3).toFixed(1)+' mV',on:v=>{BGS.vos=v;bgsUpdate();}});
+  const h=document.createElement('p'); h.className='hint'; h.innerHTML='点右上角「调电阻到零温漂」：按当前 n 和器件参数，自动设定决定 K 的电阻，使 V<sub>REF</sub> 在 42.5 °C 处斜率为零。'; c.appendChild(h);
+  bgsUpdate();
+}
+function bgsUpdate(){
+  const t=BGT[BGS.topo], r=BGS.r[BGS.topo], p=P(), vos=t.opamp?BGS.vos:0;
+  const res=tcOf(T=>t.calc(T,p,r,vos).vref);
+  const ideal=vos!==0?tcOf(T=>t.calc(T,p,r,0).vref):null;
+  const o27=t.calc(TK(27),p,r,vos);
+  const all=res.pts.map(q=>q[1]).concat(ideal?ideal.pts.map(q=>q[1]):[]);
+  const lo=Math.min(...all), hi=Math.max(...all), pad=Math.max(0.002,(hi-lo)*0.18);
+  bgsPlot.set({x:[-40,125],y:[lo-pad,hi+pad],xlabel:'温度 (°C)',ylabel:'V_REF (V)',xfmt:v=>v.toFixed(0),yfmt:v=>v.toFixed(hi-lo<0.02?4:3),ml:72,
+    series:[ideal&&{pts:ideal.pts,color:'--ink-2',width:1.5,dash:[5,4],label:'无失调'},{pts:res.pts,color:'--accent',width:2.8,label:t.name}],
+    hlines:[{y:res.max,color:'--warn',dash:[3,3]},{y:res.min,color:'--warn',dash:[3,3],label:'box '+((res.max-res.min)*1e3).toFixed(2)+' mV'}],
+    hname:'T',hx:v=>v.toFixed(1)+' °C',hy:v=>v.toFixed(5)+' V'});
+  const rows=[
+    {k:'V<sub>REF</sub> @ 27 °C',v:res.v27.toFixed(4)+' V',hl:1},
+    {k:'温漂（box 法）',v:res.tc.toFixed(1)+' ppm/°C',s:'−40 ～ 125 °C'},
+    {k:'等效 K · ln N',v:o27.K.toFixed(2)+' × '+o27.lnN.toFixed(2),s:'一阶零温漂需 K·lnN ≈ '+(kAuto(1,p,TZ0)).toFixed(1)},
+    {k:'主支路电流 @ 27 °C',v:si(o27.I,'A',3),s:o27.Ip!=null?'PTAT '+si(o27.Ip,'A',2)+' + CTAT '+si(o27.Ic,'A',2):'PTAT'},
+    {k:'最低 V<sub>DD</sub>（估算）',v:t.vdd(res.v27,p).toFixed(2)+' V',s:t.vddS}];
+  if(t.opamp){ const e=res.v27-ideal_v27(t,p,r); rows.push({k:'失调引起的误差',v:(e*1e3>=0?'+':'')+(e*1e3).toFixed(2)+' mV',s:'放大倍数 '+t.gainS+' = '+t.gain(r).toFixed(1)}); }
+  stats($('bgs-stats'),rows);
+  setT('bgs','vref',res.v27.toFixed(4)+' V'); t.labels(r,o27); t.flows($('bgs-sch'),o27,r);
+}
+function ideal_v27(t,p,r){ return t.calc(TK(27),p,r,0).vref; }
+mkSeg($('bgs-seg'),Object.keys(BGT).map(k=>[k,BGT[k].name]),BGS.topo,k=>{BGS.topo=k; bgsBuild();});
+$('bgs-auto').addEventListener('click',()=>{ const t=BGT[BGS.topo], r=BGS.r[BGS.topo]; t.auto(r,P(),TZ0); Object.keys(bgsSliders).forEach(k=>bgsSliders[k].set(r[k],true)); bgsUpdate(); });
+window.bgsUpdate=bgsUpdate;
+bgsBuild();
+bgpUpdate();
+
+/* ---------------- nav highlight ---------------- */
+const links=[...document.querySelectorAll('nav.toc a')];
+const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ links.forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+e.target.id)); } }); },{rootMargin:'-45% 0px -50% 0px'});
+document.querySelectorAll('section.ch').forEach(s=>io.observe(s));
+})();
+</script>
