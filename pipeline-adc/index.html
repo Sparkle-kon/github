@@ -958,6 +958,52 @@ main > .part-h:first-child{border-top:0;padding-top:0}
         <div class="prose" style="margin-top:18px">
           <p>对比四种步长（仿真最多运行 1 亿个样本）：2⁻¹⁴ 几万个样本就收敛，但估计误差停在约 1% 来回抖，ENOB 上不去；2⁻¹⁸ 的误差底约 0.3%；2⁻²² 要几百万个样本才收敛，一亿个样本后误差约 0.05%，ENOB 在 11.5 位上下；“1/n”相当于对全部历史求平均，精度随样本数持续提高，一亿个样本后可到约 0.01%，接近 12 位，但它也失去了跟踪参数漂移的能力。实际芯片常用变步长：先大后小。Δ 越大，相关信号越强，收敛越快，但占用的冗余余量也越多。每次运行的随机序列不同，具体数值会有起伏。</p>
         </div>
+        <h3 id="mdither">多位抖动：必须按实际幅度抵消</h3>
+        <div class="prose">
+          <p>上面的实验台用的是 1 位抖动 ±Δ。如果改用多位抖动，比如由 K 个单位单元组成、每个单元贡献 ±δ<sub>0</sub>（δ<sub>0</sub> = Δ/K），就有一个新问题：<strong>数字端减掉的量，必须等于这个抖动值实际进入模拟通路、再经过实际增益 G′ 放大后，在后级码字里的大小。</strong></p>
+          <div class="eq">D<sub>back</sub> = G′ · ( V<sub>in</sub> − D<sub>1</sub>·V<sub>ref</sub>/2 + Σ<sub>i</sub> q<sub>i</sub>·δ<sub>i</sub> ) ，&nbsp; δ<sub>i</sub> = δ<sub>0</sub>·(1 + e<sub>i</sub>)，&nbsp; 标称码 t = Σ<sub>i</sub> q<sub>i</sub></div>
+          <ul>
+            <li><strong>1 位抖动天然线性。</strong>它只有两个电平，任何幅度误差都只改变比例，一个系数 â = G′·Δ 就能把它完全描述并消掉。</li>
+            <li><strong>多位抖动 DAC 有电平失配。</strong>单元之间的失配 e<sub>i</sub> 就是抖动 DAC 的 INL/DNL。同一个标称码 t 对应的实际幅度不再是 t·δ<sub>0</sub>，按 “t × 一个系数” 抵消会留下残差。抖动是随机的，所以残差表现为抬高的底噪，而不是杂散。</li>
+            <li><strong>怎么按幅度抵消，取决于抖动是怎么构造的。</strong>
+              <ul>
+                <li>每个单元由<strong>独立</strong>的 PN 序列驱动时，对每个单元单独做相关，得到 â<sub>i</sub> = E[q<sub>i</sub>·D<sub>back</sub>] = G′·δ<sub>i</sub>，然后按单元减去 Σ â<sub>i</sub>·q<sub>i</sub>（K 个系数）。这时按码值查表没有用：同一个 t 对应多种单元组合，查表只能得到它们的平均值。</li>
+                <li>单元按<strong>固定映射</strong>使用时（例如温度计码、单元顺序固定），每个码值的实际幅度是固定的，可以用条件平均为每个码值估计一个系数，按码值查表抵消（K+1 个系数）。</li>
+              </ul>
+            </li>
+            <li><strong>抵消干净不等于增益准确。</strong>â<sub>i</sub> 估计的是 G′·δ<sub>i</sub> 这个乘积，二者分不开。要从中求出 G′，还必须知道抖动的绝对幅度（相对于主 DAC）。抖动 DAC 的整体幅度误差和单元失配的平均值，都会原样变成增益估计误差。实际设计中通常让抖动通过与子 DAC 相同的单位电容注入，或者同时校准 DAC 电平，来锁定这个比例。</li>
+          </ul>
+          <p>为什么还要用多位抖动？在相同峰值下，1 位 ±Δ 的功率其实最大，收敛最快。多位抖动的价值主要在别处：抖动值落在传输曲线的多个点上，可以用来估计放大器的非线性项（例如三阶失真）；幅度大、电平多的减性抖动能把后级的 DNL 误差随机化，降低杂散；多个独立序列还可以同时估计多个参数。代价就是下面演示的问题：抖动 DAC 自身的失配也必须被测出来并抵消。</p>
+          <p>下面的实验台假设各个估计都已经收敛（取期望值，相当于无限长平均），只看抵消方式本身的影响。ADC 结构与上一个实验台相同：12 位，第一级 1.5 位，后级为理想的 11 位，输入为 0.85 V<sub>ref</sub> 的正弦，抖动总峰值 Δ = V<sub>ref</sub>/8。</p>
+        </div>
+        <div class="bench">
+          <div class="bench-h"><span>实验台 15B · 多位抖动的数字抵消</span><button class="btn" id="m-reseed">重新抽取单元失配</button></div>
+          <div class="bench-b">
+            <div class="grid2">
+              <div class="row"><span class="lbl">抖动构造</span><div class="seg" id="m-st" role="group" aria-label="抖动构造"><button data-v="pn" aria-pressed="true">独立单元（每单元一个 PN）</button><button data-v="th" aria-pressed="false">固定映射（温度计码）</button></div></div>
+              <div class="row"><span class="lbl">单元数 K</span><div class="seg" id="m-K" role="group" aria-label="单元数"><button data-v="1" aria-pressed="false">1（1 位）</button><button data-v="2" aria-pressed="false">2</button><button data-v="4" aria-pressed="true">4</button><button data-v="8" aria-pressed="false">8</button></div></div>
+              <div class="ctl"><label for="m-sig">单元失配 σ</label><input type="range" id="m-sig" min="0" max="5" step="0.05" value="2"><output id="m-sig-o"></output></div>
+              <div class="ctl"><label for="m-s">抖动整体幅度误差</label><input type="range" id="m-s" min="-2" max="2" step="0.05" value="0"><output id="m-s-o"></output></div>
+              <div class="row"><span class="lbl">重建用的增益</span><div class="seg" id="m-g" role="group" aria-label="重建用的增益"><button data-v="ideal" aria-pressed="true">理想已知（只看抵消）</button><button data-v="dither" aria-pressed="false">由抖动相关估计</button></div></div>
+              <div class="row"><span class="lbl">频谱显示</span><div class="seg" id="m-show" role="group" aria-label="频谱显示的抵消方式"><button data-v="a" aria-pressed="true">按标称码</button><button data-v="lut" aria-pressed="false">按码值查表</button><button data-v="el" aria-pressed="false">按单元</button></div></div>
+            </div>
+            <div class="metrics" id="m-met"></div>
+            <div class="lab-plots">
+              <figure><figcaption>每种抖动组合抵消后的残差（折算到输入，单位为 12 位 LSB；灰带为 ±½ LSB）</figcaption><canvas class="cv h280" id="m-res"></canvas></figure>
+              <figure><figcaption id="m-spec-cap">输出频谱</figcaption><canvas class="cv h280" id="m-spec"></canvas></figure>
+            </div>
+            <div class="readout" id="m-hint"></div>
+          </div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p>可以这样试：</p>
+          <ol>
+            <li>K 取 1：三种方式完全一样，ENOB 都接近参考值。1 位抖动没有电平失配问题。</li>
+            <li>K 取 4、独立单元：“按标称码”和“按码值查表”的残差点在同一个 t 上分散开，ENOB 掉一到两位；只有“按单元”的残差全部为 0。把失配 σ 加大，差距会继续拉大。</li>
+            <li>切到“固定映射”：每个码值只有一个点，这时“按码值查表”和“按单元”都能消干净，只有“按标称码”留下随码值变化的系统性残差（抖动 DAC 的 INL 形状）。</li>
+            <li>把“重建用的增益”切到“由抖动相关估计”，再加一点整体幅度误差：即使残差为 0，ENOB 也会下降。抖动幅度的绝对误差会变成增益误差，按单元抵消也救不回来。</li>
+          </ol>
+        </div>
       </section>
 
       <div class="part-h"><span>第三部分</span>技术路线与架构<small>工艺越先进，模拟电路越难做（电源电压低、晶体管本征增益低），数字电路却越来越便宜。流水线 ADC 几十年的演进，就是不断把精度负担从模拟搬到数字。</small></div>
@@ -1128,6 +1174,7 @@ main > .part-h:first-child{border-top:0;padding-top:0}
           <details><summary>7. 输入 1 GHz、要求 SNR 70 dB，时钟抖动最多允许多少？</summary><div class="inner">σ<sub>t</sub> ≤ 10<sup>−70/20</sup> / (2π × 10<sup>9</sup>) ≈ 3.16×10<sup>−4</sup> / 6.28×10<sup>9</sup> ≈ 50 fs（rms）。</div></details>
           <details><summary>8. 4 通道时间交织，f<sub>s</sub> = 4 GS/s，f<sub>in</sub> = 900 MHz。增益失配杂散落在哪些频率？失调杂散呢？</summary><div class="inner">增益和时序失配杂散在 k·1 GHz ± 900 MHz，折叠到 0–2 GHz 后为 100 MHz、1100 MHz 和 1900 MHz。失调杂散在 1 GHz 和 2 GHz（以及直流）。</div></details>
           <details><summary>9. 为什么 PN 抖动后台校准需要几百万个样本才能达到 12 位精度？</summary><div class="inner">输入信号在相关运算里是“噪声”，它的功率远大于抖动信号。估计值的标准差约随 √(μ) 或 1/√n 下降，要把增益误差压到约 2<sup>−12</sup>，就需要上百万量级的平均。加大 Δ 能加快收敛，但会占用冗余余量和信号范围。</div></details>
+          <details><summary>10. 后台校准改用 4 个单元组成的多位抖动，每个单元由独立的 PN 驱动。为什么不能只用“码值 t × 一个系数”来抵消？应该怎么做？</summary><div class="inner">单元之间有失配，同一个 t 可以由不同的单元组合产生，实际幅度各不相同，单一系数只能抵消平均斜率，剩下的部分是随机残差，会抬高底噪。应对每个单元分别做相关估计 â<sub>i</sub> = E[q<sub>i</sub>·D<sub>back</sub>]，按单元减去 Σâ<sub>i</sub>q<sub>i</sub>。如果单元是固定映射（温度计码），也可以按码值查表。另外，抵消干净并不代表增益估计准确：增益估计还取决于抖动的绝对幅度。</div></details>
         </div>
         <h3>延伸阅读</h3>
         <ul class="refs">
@@ -2254,6 +2301,99 @@ function drawSpec(cv, P, o) {
     io.observe(bench);
   }
   btn.addEventListener('click', () => { auto = true; }, { once: true });
+})();
+
+/* =========== Ch12b multi-bit dither cancellation =========== */
+(() => {
+  const S = { st: 'pn', K: 4, g: 'ideal', show: 'a', seed: 5 };
+  const NF = 4096, JT = 401, AMP = 0.85, DELTA = 1 / 8, LSB = 2 / 4096;
+  const METH = [['a', '按标称码 t', 'ch1'], ['lut', '按码值查表', 'ch2'], ['el', '按单元', 'ch3']];
+  function patterns(K, st) {
+    const out = [];
+    if (st === 'th') for (let L = 0; L <= K; L++) out.push({ q: Array.from({ length: K }, (_, i) => i < L ? 1 : -1), p: 1 / (K + 1) });
+    else for (let m = 0; m < (1 << K); m++) out.push({ q: Array.from({ length: K }, (_, i) => (m >> i) & 1 ? 1 : -1), p: 1 / (1 << K) });
+    return out;
+  }
+  function draw() {
+    const K = S.K, G = 2 * (1 - 0.015), d0 = DELTA / K;
+    const g = gaussFn(mulberry32(S.seed * 131 + 7));
+    const del = Array.from({ length: K }, () => d0 * (1 + S.s / 100) * (1 + g() * S.sig / 100));
+    const pats = patterns(K, S.st);
+    for (const pt of pats) { pt.t = pt.q.reduce((a, b) => a + b, 0); pt.d = pt.q.reduce((a, q, i) => a + q * del[i], 0); }
+    let etd = 0, ett = 0; const lut = new Map(), lw = new Map();
+    for (const pt of pats) {
+      etd += pt.p * pt.t * pt.d; ett += pt.p * pt.t * pt.t;
+      lut.set(pt.t, (lut.get(pt.t) || 0) + pt.p * pt.d); lw.set(pt.t, (lw.get(pt.t) || 0) + pt.p);
+    }
+    for (const [t, v] of lut) lut.set(t, v / lw.get(t));
+    const Gd = G * etd / (ett * d0), Gr = S.g === 'ideal' ? G : Gd;
+    const cancel = { a: pt => G * etd / ett * pt.t, lut: pt => G * lut.get(pt.t), el: pt => G * pt.d };
+    // test record
+    const rng = mulberry32(S.seed * 977 + 3), D1 = new Int8Array(NF), R = new Float64Array(NF), R0 = new Float64Array(NF), P = new Int32Array(NF);
+    const q11 = r => (Math.floor((clamp(r, -1, 1 - 1e-12) + 1) * 1024) + .5) / 1024 - 1;
+    for (let n = 0; n < NF; n++) {
+      const v = AMP * Math.sin(2 * Math.PI * JT * n / NF + .37), d = v >= .25 ? 1 : v < -.25 ? -1 : 0;
+      const k = Math.min(pats.length - 1, Math.floor(rng() * pats.length));
+      D1[n] = d; P[n] = k; R[n] = q11(G * (v - d * .5 + pats[k].d)); R0[n] = q11(G * (v - d * .5));
+    }
+    const toCode = v => clamp(Math.floor((v + 1) * 2048), 0, 4095) - 2047.5;
+    const run = fn => {
+      const x = new Float64Array(NF);
+      for (let n = 0; n < NF; n++) x[n] = toCode(D1[n] * .5 + (R[n] - fn(pats[P[n]])) / Gr);
+      return specStats(x, JT);
+    };
+    const enobOf = st => (st.sndr + 20 * Math.log10(1 / AMP) - 1.76) / 6.02;
+    const x0 = new Float64Array(NF); for (let n = 0; n < NF; n++) x0[n] = toCode(D1[n] * .5 + R0[n] / G);
+    const ref = enobOf(specStats(x0, JT));
+    const res = {}; for (const [m] of METH) res[m] = run(cancel[m]);
+    // residual rms per method (input referred, LSB)
+    const rms = m => Math.sqrt(pats.reduce((a, pt) => a + pt.p * Math.pow((G * pt.d - cancel[m](pt)) / Gr / LSB, 2), 0));
+    const cls = e => e > ref - .15 ? 'good' : e > ref - 1 ? 'mid' : 'poor';
+    $('#m-met').innerHTML = metricsHTML([
+      { k: '参考（无抖动、增益已知）', v: ref.toFixed(2), u: '位' },
+      ...METH.map(([m, name]) => ({ k: name + ' · ENOB', v: enobOf(res[m]).toFixed(2), u: '位', c: cls(enobOf(res[m])) })),
+      { k: '按标称码的残差 rms', v: rms('a').toFixed(2), u: 'LSB' },
+      { k: '由抖动估计的增益误差', v: ((Gd / G - 1) * 100).toFixed(3), u: '%' }
+    ]);
+    // residual scatter
+    {
+      const cv = $('#m-res'), { ctx, w, h } = prep(cv);
+      const box = { x: 46, y: 22, w: w - 46 - 12, h: h - 22 - 36 };
+      let mx = 1; for (const pt of pats) for (const [m] of METH) mx = Math.max(mx, Math.abs((G * pt.d - cancel[m](pt)) / Gr / LSB));
+      const yr = Math.ceil(mx * 1.15 * 2) / 2;
+      const ts = [...new Set(pats.map(p => p.t))].sort((a, b) => a - b);
+      const { X, Y } = axes(ctx, { ...box, xmin: -K - 1.2, xmax: K + 1.2, ymin: -yr, ymax: yr, xt: ts.length <= 9 ? ts : ts.filter((_, i) => i % 2 === 0), yt: niceTicks(-yr, yr, 4), xl: '标称抖动码 t', yl: '残差 / LSB' });
+      clipBox(ctx, box);
+      ctx.fillStyle = A(C.muted, .12); ctx.fillRect(box.x, Y(.5), box.w, Y(-.5) - Y(.5));
+      ctx.strokeStyle = A(C.ink, .5); ctx.beginPath(); ctx.moveTo(box.x, Y(0)); ctx.lineTo(box.x + box.w, Y(0)); ctx.stroke();
+      const off = { a: -.32, lut: 0, el: .32 };
+      for (const [m, , col] of METH) {
+        ctx.fillStyle = A(C[col], S.show === m ? .95 : .6);
+        for (const pt of pats) { ctx.beginPath(); ctx.arc(X(pt.t + off[m]), Y((G * pt.d - cancel[m](pt)) / Gr / LSB), S.show === m ? 4 : 3, 0, 7); ctx.fill(); }
+      }
+      ctx.font = '11px ' + SANS; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      METH.forEach(([m, name, col], i) => {
+        const y = box.y + 12 + i * 16; ctx.fillStyle = C[col]; ctx.beginPath(); ctx.arc(box.x + 12, y, 4, 0, 7); ctx.fill();
+        ctx.fillStyle = S.show === m ? C.ink : C.muted; ctx.fillText(name, box.x + 22, y);
+      });
+      ctx.restore();
+    }
+    const name = METH.find(x => x[0] === S.show)[1];
+    $('#m-spec-cap').textContent = '输出频谱：' + name + '（dBFS）';
+    drawSpec($('#m-spec'), res[S.show].P, { ref: Math.pow(2048 * NF / 2, 2), fs: 1, xs: 1, xl: 'f / f_s', yl: 'dBFS', ymin: -140, marks: [] });
+    const hint = K === 1 ? '1 位抖动只有两个电平，三种方式等价，一个系数就能完全消掉。'
+      : S.st === 'pn' ? '独立单元：同一个 t 对应 ' + (1 << K) + ' 种单元组合，实际幅度各不相同；按码值查表得到的只是它们的平均，只有按单元估计能消干净。'
+        : '固定映射：每个码值只对应一种单元组合，实际幅度固定，按码值查表也能消干净；按标称码只用一个斜率，留下抖动 DAC 的 INL。';
+    $('#m-hint').innerHTML = `<span>${hint}${S.g === 'dither' ? ' 当前重建增益取自抖动相关，增益误差 ' + ((Gd / G - 1) * 100).toFixed(3) + '% 会影响所有方式。' : ''}</span>`;
+  }
+  seg($('#m-st'), v => { S.st = v; draw(); });
+  seg($('#m-K'), v => { S.K = +v; draw(); });
+  seg($('#m-g'), v => { S.g = v; draw(); });
+  seg($('#m-show'), v => { S.show = v; draw(); });
+  bindRange('m-sig', v => v.toFixed(2) + ' %', v => S.sig = v, false, draw);
+  bindRange('m-s', v => (v > 0 ? '+' : v < 0 ? MINUS : '') + Math.abs(v).toFixed(2) + ' %', v => S.s = v, false, draw);
+  $('#m-reseed').addEventListener('click', () => { S.seed++; draw(); });
+  onRedraw(draw);
 })();
 
 /* =========== Ch13 time-interleaving =========== */
